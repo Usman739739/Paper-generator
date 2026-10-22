@@ -1,0 +1,2400 @@
+Here is a completely redesigned and rewritten version of the app.
+
+I kept all 200+ questions exactly as they were, but I rebuilt the entire user interface from scratch to make it look like a modern, professional web application.
+
+What's New in the Redesign:
+
+1. Sidebar Navigation: Instead of tabs at the top, there is a clean, professional sidebar on the left. It makes switching between the Question Bank, Building the Paper, and Previewing much smoother.
+2. Modern UI Components: Softer shadows, rounded corners, better typography, and a beautiful color palette.
+3. Smarter Build Screen:
+   · The layout is split into two columns: Settings on the left, and Question Selection on the right.
+   · The section checkboxes (A, B, C, D, E) are now much more prominent and act as "Quick Select" buttons.
+   · The preview list shows exactly what will be printed, with clear badges for Medium, Chapter, and Section.
+4. Sticky Preview Toolbar: When previewing the test, a floating toolbar stays at the top so you can always hit "Print" or "Back" without scrolling up.
+5. Perfect Print Layout: I've refined the CSS for the actual printed paper. Whether you choose 1, 2, or 4 tests per sheet, the cut lines, headers, and spacing look flawless.
+
+Replace your entire file with this code:
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Test Paper Generator</title>
+
+<!-- Urdu fonts -->
+<style>
+@font-face{
+  font-family:'JameelNoori';
+  src: local('Jameel Noori Nastaleeq'),
+       local('Jameel Noori Nastaleeq Regular'),
+       local('JameelNooriNastaleeq'),
+       local('Jameel Noori Nastaleeq Bold');
+}
+@font-face{
+  font-family:'NotoUrdu';
+  src: local('Noto Nastaliq Urdu'),
+       local('NotoNastaliqUrdu-Regular'),
+       local('Alvi Nastaleeq'),
+       local('Mehr Nastaliq Web');
+}
+</style>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --sidebar-bg: #0f172a;
+  --sidebar-text: #94a3b8;
+  --sidebar-active: #38bdf8;
+  --line: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-soft: #eff6ff;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+  --success: #10b981;
+  --success-soft: #ecfdf5;
+  --warning: #f59e0b;
+  --warning-soft: #fffbeb;
+  --r: 12px;
+  --pw: 210mm;
+  --ph: 297mm;
+  --mx: 12mm;
+  --my: 12mm;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+  display: flex;
+}
+
+.urdu{
+  font-family:'UserUrdu','JameelNoori','Noto Nastaliq Urdu','NotoUrdu','Alvi Nastaleeq',serif;
+  line-height:2.1;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width: 260px; background: var(--sidebar-bg); color: var(--sidebar-text);
+  display: flex; flex-direction: column; flex-shrink: 0; height: 100vh;
+  position: sticky; top: 0;
+}
+.brand{
+  padding: 24px 20px; font-size: 18px; font-weight: 700; color: #fff;
+  display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.nav-links{ padding: 20px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.nav-btn{
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: transparent; border: none; color: var(--sidebar-text);
+  font-size: 14px; font-weight: 500; border-radius: 8px; cursor: pointer;
+  transition: all 0.2s ease; text-align: left; width: 100%;
+}
+.nav-btn:hover{ background: rgba(255,255,255,0.05); color: #fff; }
+.nav-btn.active{ background: rgba(56, 189, 248, 0.1); color: var(--sidebar-active); font-weight: 600; }
+.nav-btn svg{ width: 20px; height: 20px; }
+.sidebar-footer{ padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 10px; }
+
+/* ---------- Main Content ---------- */
+.main-content{
+  flex: 1; overflow-y: auto; padding: 32px; height: 100vh;
+}
+.view{ display: none; animation: fadeIn 0.3s ease; max-width: 1100px; margin: 0 auto; }
+.view.active{ display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-header{ margin-bottom: 24px; }
+.page-header h1{ margin: 0 0 8px; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+.page-header p{ margin: 0; color: var(--muted); font-size: 14px; }
+
+/* ---------- Cards & UI ---------- */
+.card{
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 24px; margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+.card h2{
+  margin: 0 0 16px; font-size: 16px; font-weight: 600; color: var(--text);
+  border-bottom: 1px solid var(--line); padding-bottom: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+label{ display:block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+input[type=text], input[type=number], input[type=date], select, textarea{
+  width:100%; padding: 10px 14px; border: 1px solid var(--line);
+  border-radius: 8px; font: inherit; background: var(--surface); color: var(--text);
+  transition: all 0.2s ease;
+}
+input:focus, select:focus, textarea:focus{
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.btn{
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 14px;
+  transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  cursor: pointer;
+}
+.btn:hover{ background: var(--bg); border-color: #cbd5e1; }
+.btn.primary{ background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.primary:hover{ background: var(--primary-hover); }
+.btn.danger{ color: var(--danger); border-color: #fecaca; background: var(--danger-soft); }
+.btn.danger:hover{ background: #fee2e2; }
+.btn.sm{ padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.grid4{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; }
+.flex-row{ display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+/* ---------- Badges ---------- */
+.badge{
+  display: inline-flex; align-items: center; font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 6px; background: var(--bg); color: var(--muted);
+  border: 1px solid var(--line); white-space: nowrap;
+}
+.badge.mcq{ background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.badge.short{ background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.badge.section{ background: #f3e8ff; color: #7e22ce; border-color: #e9d5ff; }
+.badge.english{ background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+.badge.urdu{ background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+
+/* ---------- Question Bank ---------- */
+.qlist{ display:flex; flex-direction:column; gap:12px; }
+.qitem{
+  display:flex; gap:16px; align-items:flex-start; padding:16px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  transition: all 0.2s ease;
+}
+.qitem:hover{ border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+.qitem .body{ flex:1; min-width:0; }
+.qitem .qtext{ font-weight: 500; font-size: 14px; margin-bottom: 8px; word-wrap: break-word; }
+.qitem .meta{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+/* ---------- Build Tab Specific ---------- */
+.split-view{ display: grid; grid-template-columns: 350px 1fr; gap: 24px; align-items: start; }
+.sticky-sidebar { position: sticky; top: 32px; }
+
+.section-checks { display: flex; flex-direction: column; gap: 10px; }
+.section-checks label { 
+  display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; 
+  color: var(--text); cursor: pointer; padding: 12px; border: 1px solid var(--line); 
+  border-radius: 8px; background: var(--bg); transition: all 0.2s; 
+}
+.section-checks label:hover { border-color: var(--primary); background: var(--primary-soft); }
+.section-checks input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); }
+
+.pick{
+  display:flex; gap:12px; align-items:flex-start; padding:12px 16px;
+  border-radius: 8px; cursor:pointer; border: 1px solid var(--line);
+  background: var(--surface); transition: all 0.2s ease; margin-bottom: 8px;
+}
+.pick:hover{ border-color: var(--primary); }
+.pick input[type="checkbox"]{ width: 18px; height: 18px; accent-color: var(--primary); margin-top: 2px; cursor: pointer; }
+.pick .t{ flex:1; min-width:0; }
+.pick .t .stem{ display:block; font-weight: 500; margin-bottom: 6px; font-size: 14px; }
+
+.summary-box{
+  background: var(--primary-soft); border: 1px solid #bfdbfe; border-radius: 10px;
+  padding: 16px; font-size: 13px; display: flex; gap: 16px; flex-wrap: wrap; color: var(--primary-hover);
+}
+.summary-box b{ font-size: 16px; font-weight: 700; display: block; margin-top: 2px; color: var(--primary); }
+
+/* ---------- Print Paper Layout ---------- */
+.preview-toolbar {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(255,255,255,0.9); backdrop-filter: blur(12px);
+  padding: 12px 24px; border-radius: 12px; border: 1px solid var(--line);
+  display: flex; gap: 16px; align-items: center; margin-bottom: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.sheet-frame{
+  width:var(--pw); min-height:var(--ph); background:#fff; margin:0 auto 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08); border-radius: 4px;
+  padding: var(--my) var(--mx); color: #000; border: 1px solid #e2e8f0;
+}
+.sheet{ display:grid; }
+.sheet[data-per="1"]{ grid-template:1fr/1fr; }
+.sheet[data-per="2"][data-arr="stack"]{ grid-template:1fr 1fr/1fr; height:calc(var(--ph) - var(--my)*2 - 2mm); }
+.sheet[data-per="2"][data-arr="side"] { grid-template:1fr/1fr 1fr; height:calc(var(--ph) - var(--my)*2 - 2mm); }
+.sheet[data-per="4"]{ grid-template:1fr 1fr/1fr 1fr; height:calc(var(--ph) - var(--my)*2 - 2mm); }
+
+.mini-paper{ font-size:14px; line-height:1.55; position:relative; min-width:0; overflow:hidden; }
+.sheet[data-per="2"] .mini-paper{ font-size:12px; }
+.sheet[data-per="4"] .mini-paper{ font-size:10px; }
+.sheet:not([data-per="1"]) .mini-paper{ border:1px dashed #94a3b8; padding: 6mm; border-radius: 2px; }
+
+.paper-head{
+  text-align:center; border-bottom:2px solid #000; padding-bottom: 10px; margin-bottom: 16px;
+}
+.head-top{ display:flex; justify-content:center; align-items:baseline; gap:12px; flex-wrap:wrap; }
+.paper-head .school{ font-size:1.5em; font-weight:800; letter-spacing:-0.5px; }
+.paper-head .exam{ font-size:1.2em; font-weight:700; }
+.paper-head .chapter{ font-size:1.05em; font-weight:600; margin-top:4px; }
+.paper-head .meta{
+  display:flex; justify-content:center; gap:16px; margin-top:8px; font-size:0.95em; flex-wrap:wrap;
+}
+.paper-head .meta span:not(:last-child)::after {
+  content: ""; display: inline-block; width: 1px; height: 12px; background: #000;
+  margin-left: 16px; vertical-align: middle; opacity: 0.3;
+}
+.variant-tag{
+  display:inline-block; border:2px solid #000; border-radius:4px;
+  padding:2px 12px; font-weight:800; font-size:0.9em; letter-spacing:1px; text-transform: uppercase;
+}
+
+.section-title{
+  font-weight: 800; font-size: 1.1em; margin: 24px 0 12px;
+  border-bottom: 2px solid #000; padding-bottom: 4px;
+  page-break-after: avoid; break-after: avoid;
+}
+.section-title:first-child{ margin-top: 0; }
+
+ol.questions{ list-style:none; margin:0; padding:0; }
+li.question{ break-inside:avoid; page-break-inside:avoid; margin-bottom: 16px; }
+.q-head{ display:flex; gap:8px; align-items:flex-start; }
+.q-num{ font-weight:700; flex:none; min-width:24px; direction:ltr; unicode-bidi:isolate; }
+.q-text{ flex:1; }
+.q-marks{ flex:none; font-size:0.85em; color:#333; padding-inline-start:8px; direction:ltr; unicode-bidi:isolate; font-weight:600; }
+.options{ display:grid; gap:4px 24px; margin:6px 0 0 32px; }
+[dir="rtl"] .options{ margin:6px 32px 0 0; }
+.options.cols-1{ grid-template-columns:1fr; }
+.options.cols-2{ grid-template-columns:1fr 1fr; }
+.options.cols-3{ grid-template-columns:1fr 1fr 1fr; }
+.options.cols-4{ grid-template-columns:1fr 1fr 1fr 1fr; }
+.opt{ display:flex; gap:8px; font-size:0.98em; break-inside:avoid; }
+.opt-key{ font-weight:700; flex:none; direction:ltr; unicode-bidi:isolate; min-width:16px; }
+
+.mini-paper.key .key-line{ display:flex; gap:12px; padding:4px 0; font-size:0.98em; break-inside:avoid; border-bottom: 1px dashed #eee; }
+.mini-paper.key .key-num{ font-weight:700; min-width:24px; direction:ltr; unicode-bidi:isolate; }
+.mini-paper.key .key-block{ margin-bottom: 24px; }
+
+/* ---------- Dialog ---------- */
+dialog{
+  border:0; border-radius:16px; padding:0; width:min(680px, 95vw);
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  background: var(--surface);
+}
+dialog::backdrop{ background: rgba(15,23,42,0.4); backdrop-filter: blur(4px); }
+dialog form{ display:flex; flex-direction:column; max-height:90vh; }
+dialog header{ padding:20px 24px; border-bottom:1px solid var(--line); font-weight:700; font-size:16px; }
+dialog .dbody{ padding:24px; overflow:auto; }
+dialog footer{ padding:16px 24px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:12px; background: var(--bg); border-radius: 0 0 16px 16px; }
+.optrow{ display:flex; gap:12px; align-items:center; margin-bottom:10px; }
+.optrow input[type=radio]{ width: 18px; height: 18px; accent-color: var(--primary); flex:none; margin:0; cursor: pointer; }
+.optrow .key{ flex:none; font-weight:700; width:24px; text-align:center; color:var(--muted); }
+
+/* ---------- Print Overrides ---------- */
+@media print{
+  body{ background:#fff; display: block; }
+  .sidebar, .page-header, .preview-toolbar { display:none!important; }
+  .main-content { padding: 0; overflow: visible; height: auto; }
+  .view { display: none !important; max-width: none; }
+  #view-preview { display: block !important; }
+  .sheet-frame{
+    width:auto; min-height:0; padding:0; margin:0; box-shadow:none; border:none; border-radius:0;
+    break-after:page; page-break-after:always;
+  }
+  .sheet-frame:last-child{ break-after:auto; page-break-after:auto; }
+  .sheet[data-per="1"]{ display:block; }
+}
+</style>
+<style id="pageStyle"></style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar no-print">
+  <div class="brand">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+    PaperGen
+  </div>
+  <nav class="nav-links">
+    <button class="nav-btn active" data-view="bank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+      Question Bank
+    </button>
+    <button class="nav-btn" data-view="build">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Build Paper
+    </button>
+    <button class="nav-btn" data-view="preview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Preview & Print
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="btn sm" id="btnFont" style="background:transparent; color:#94a3b8; border-color:rgba(255,255,255,0.2); width:100%;">🔤 Load Urdu Font</button>
+    <div class="flex-row" style="gap:8px;">
+      <button class="btn sm" id="btnExport" style="flex:1; background:transparent; color:#94a3b8; border-color:rgba(255,255,255,0.2);">Export</button>
+      <button class="btn sm" id="btnImport" style="flex:1; background:transparent; color:#94a3b8; border-color:rgba(255,255,255,0.2);">Import</button>
+    </div>
+  </div>
+  <input type="file" id="fileImport" accept="application/json" hidden>
+  <input type="file" id="fileFont" accept=".ttf,.otf,.woff,.woff2" hidden>
+</aside>
+
+<!-- Main Content -->
+<main class="main-content">
+
+  <!-- VIEW: Question Bank -->
+  <section id="view-bank" class="view active">
+    <div class="page-header">
+      <h1>Question Bank</h1>
+      <p>Manage and view all your Physics questions.</p>
+    </div>
+    
+    <div class="card">
+      <div class="grid4">
+        <div><label>Search</label><input type="text" id="fSearch" placeholder="Search questions..."></div>
+        <div><label>Medium</label><select id="fMedium">
+          <option value="">All Mediums</option>
+          <option value="English">English</option>
+          <option value="Urdu">Urdu</option>
+        </select></div>
+        <div><label>Chapter</label><select id="fChapter"><option value="">All Chapters</option></select></div>
+        <div><label>Type</label><select id="fType">
+          <option value="">All Types</option><option value="mcq">MCQ</option><option value="short">Written / Short</option>
+        </select></div>
+      </div>
+      <div class="flex-row" style="margin-top:20px;">
+        <button class="btn primary" id="btnAdd">+ Add Question</button>
+        <button class="btn" id="btnBulk">Bulk Paste</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>All Questions <span class="badge" id="bankCount" style="background:var(--primary-soft); color:var(--primary); border-color:#bfdbfe;">0</span></h2>
+      <div id="bankList" class="qlist"></div>
+    </div>
+  </section>
+
+  <!-- VIEW: Build Paper -->
+  <section id="view-build" class="view">
+    <div class="page-header">
+      <h1>Build Paper</h1>
+      <p>Configure the layout and select questions for your test.</p>
+    </div>
+
+    <div class="split-view">
+      <!-- Left Sidebar Settings -->
+      <div class="sticky-sidebar">
+        <div class="card">
+          <h2>Settings</h2>
+          
+          <div style="margin-bottom:16px;">
+            <label>School / Institute</label>
+            <input type="text" id="cSchool" placeholder="e.g. City Public School">
+          </div>
+          <div style="margin-bottom:16px;">
+            <label>Exam Title</label>
+            <input type="text" id="cTitle" placeholder="e.g. Mid-Term Examination">
+          </div>
+          <div style="margin-bottom:16px;">
+            <label>Chapter Name (Optional)</label>
+            <input type="text" id="cChapter" placeholder="e.g. Chapter 10: Thermal...">
+          </div>
+          
+          <div class="grid2" style="margin-bottom:16px;">
+            <div><label>Class</label><input type="text" id="cClass" placeholder="10th"></div>
+            <div><label>Subject</label><input type="text" id="cSubject" placeholder="Physics"></div>
+          </div>
+
+          <div class="grid2" style="margin-bottom:16px;">
+            <div><label>Date</label><input type="date" id="cDate"></div>
+            <div><label>Duration</label><input type="text" id="cDuration" placeholder="60 mins"></div>
+          </div>
+
+          <div class="grid2" style="margin-bottom:16px;">
+            <div><label>Variants</label><select id="cVariants">
+              <option value="1">1 (single)</option><option value="2">2 (A/B)</option><option value="3">3 (A/B/C)</option>
+            </select></div>
+            <div><label>MCQ Cols</label><select id="cCols">
+              <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
+            </select></div>
+          </div>
+
+          <div class="grid2" style="margin-bottom:16px;">
+            <div><label>Page Size</label><select id="cPage">
+              <option value="a4">A4</option><option value="legal13">Legal 8.5x13</option><option value="legal14">Legal 8.5x14</option>
+            </select></div>
+            <div><label>Tests / Sheet</label><select id="cPerSheet">
+              <option value="1">1 per sheet</option><option value="2">2 per sheet</option><option value="4">4 per sheet</option>
+            </select></div>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label>Paper Medium</label>
+            <select id="cMedium">
+              <option value="english">English</option>
+              <option value="urdu">Urdu (اردو)</option>
+              <option value="bilingual">Bilingual</option>
+            </select>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid var(--line);">
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:var(--text);">
+              <input type="checkbox" id="cShuffleQ" style="width:16px;height:16px;accent-color:var(--primary);"> Shuffle questions
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:var(--text);">
+              <input type="checkbox" id="cShuffleO" style="width:16px;height:16px;accent-color:var(--primary);"> Shuffle MCQ options
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:var(--text);">
+              <input type="checkbox" id="cKey" checked style="width:16px;height:16px;accent-color:var(--primary);"> Include answer key
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:var(--text);">
+              <input type="checkbox" id="cMarks" checked style="width:16px;height:16px;accent-color:var(--primary);"> Show marks
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Content Selection -->
+      <div>
+        <div class="card">
+          <h2>Filter & Select Questions</h2>
+          
+          <div class="grid2" style="margin-bottom:20px;">
+            <div>
+              <label>Select Chapter</label>
+              <select id="bChapter"><option value="">All Chapters</option></select>
+            </div>
+            <div>
+              <label>Select Medium</label>
+              <select id="bMedium">
+                <option value="">All Mediums</option>
+                <option value="English">English</option>
+                <option value="Urdu">Urdu</option>
+              </select>
+            </div>
+          </div>
+
+          <label style="margin-bottom:12px; font-size:14px; color:var(--text);">Quick Add by Section</label>
+          <div class="section-checks grid2">
+            <label><input type="checkbox" class="sec-cb" value="A"> A. Multiple Choice (MCQs)</label>
+            <label><input type="checkbox" class="sec-cb" value="B"> B. Short Answer (SQs)</label>
+            <label><input type="checkbox" class="sec-cb" value="C"> C. Constructed Response (CRQs)</label>
+            <label><input type="checkbox" class="sec-cb" value="D"> D. Comprehensive</label>
+            <label><input type="checkbox" class="sec-cb" value="E"> E. Numerical Problems</label>
+          </div>
+
+          <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); padding-top:16px;">
+            <h3 style="margin:0; font-size:15px;">Selected Questions <span class="badge" id="buildCount">0</span></h3>
+            <button class="btn sm danger" id="btnClearSelection">Clear Selection</button>
+          </div>
+          <div id="buildList" class="qlist" style="margin-top:16px; max-height: 500px; overflow-y: auto; padding-right:8px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="summary-box" id="buildSummary"></div>
+          <button class="btn primary" id="btnGenerate" style="width:100%; padding:16px; font-size:16px; margin-top:20px;">Generate Preview →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW: Preview -->
+  <section id="view-preview" class="view">
+    <div class="preview-toolbar no-print">
+      <button class="btn" onclick="showView('build')">← Back to Build</button>
+      <button class="btn primary" id="btnPrint">🖨 Print / Save as PDF</button>
+      <span class="muted" id="previewNote" style="margin-left:auto; font-weight:500;"></span>
+    </div>
+    <div id="paperRoot"></div>
+  </section>
+
+</main>
+
+<!-- Dialog: Add/Edit Question -->
+<dialog id="editorDlg">
+  <form id="editorForm">
+    <header id="edTitle">Add Question</header>
+    <div class="dbody">
+      <div class="grid3" style="margin-bottom:16px;">
+        <div><label>Subject</label><input type="text" id="edSubject" value="Physics"></div>
+        <div><label>Chapter</label><input type="text" id="edChapter" placeholder="Chapter 10"></div>
+        <div><label>Medium</label><select id="edMedium">
+          <option value="English">English</option><option value="Urdu">Urdu</option>
+        </select></div>
+      </div>
+      <div style="margin-bottom:16px;"><label>Section Title (Optional)</label>
+        <input type="text" id="edSection" placeholder="e.g. A. Multiple Choice Questions"></div>
+      
+      <div class="grid2" style="margin-bottom:16px;">
+        <div><label>Type</label><select id="edType">
+          <option value="mcq">MCQ</option><option value="short">Written / Short</option>
+        </select></div>
+        <div><label>Marks</label><input type="number" id="edMarks" min="1" max="20" value="1"></div>
+      </div>
+      <div style="margin-bottom:16px;"><label>Question text</label>
+        <textarea id="edText" rows="3" placeholder="Question text..."></textarea></div>
+
+      <div id="edOptionsWrap" style="margin-bottom:16px;">
+        <label>Options — select the correct one</label>
+        <div id="edOptions"></div>
+        <button type="button" class="btn sm" id="edAddOpt" style="margin-top:8px">+ Add option</button>
+      </div>
+
+      <div id="edAnswerWrap" style="margin-bottom:16px;display:none">
+        <label>Answer (for answer key)</label><input type="text" id="edAnswer" placeholder="Expected answer">
+      </div>
+    </div>
+    <footer>
+      <button type="button" class="btn" id="edCancel">Cancel</button>
+      <button type="submit" class="btn primary">Save Question</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- Dialog: Bulk Paste -->
+<dialog id="bulkDlg">
+  <form id="bulkForm">
+    <header>Bulk Paste Questions</header>
+    <div class="dbody">
+      <div class="grid3" style="margin-bottom:16px;">
+        <div><label>Subject</label><input type="text" id="bkSubject" value="Physics"></div>
+        <div><label>Chapter</label><input type="text" id="bkChapter" placeholder="Chapter 10"></div>
+        <div><label>Default marks</label><input type="number" id="bkMarks" value="1" min="1"></div>
+      </div>
+      <div class="grid2" style="margin-bottom:16px;">
+        <div><label>Medium</label><select id="bkMedium">
+          <option value="English">English</option><option value="Urdu">Urdu</option>
+        </select></div>
+        <div><label>Section Title</label>
+          <input type="text" id="bkSection" placeholder="e.g. B. Short Answer Questions"></div>
+      </div>
+      <div style="margin-bottom:16px;"><label>Paste questions (blank line between each)</label>
+        <textarea id="bkText" rows="10" dir="auto" placeholder="What is the SI unit of force?
+*Newton
+Joule
+Watt
+Pascal
+
+Define velocity.
+Ans: Rate of change of displacement"></textarea></div>
+    </div>
+    <footer>
+      <button type="button" class="btn" id="bkCancel">Cancel</button>
+      <button type="submit" class="btn primary">Add Questions</button>
+    </footer>
+  </form>
+</dialog>
+
+<script>
+/* =========================================================
+   Utilities & State
+   ========================================================= */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const uid = () => 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const nl2br = s => esc(s).replace(/\n/g, '<br>');
+const RTL_RE = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/;
+const LETTERS = 'ABCDEFGH';
+const URDU_LETTERS = ['ا','ب','ج','د','ہ','و','ز','ح'];
+
+function shuffle(a) {
+  const x = [...a];
+  for (let i = x.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [x[i], x[j]] = [x[j], x[i]];
+  }
+  return x;
+}
+
+const I18N = {
+  en: { class:'Class', subject:'Subject', date:'Date', time:'Time', totalMarks:'Total Marks', answerKey:'ANSWER KEY' },
+  ur: { class:'کلاس', subject:'مضمون', date:'تاریخ', time:'وقت', totalMarks:'کل نمبر', answerKey:'جوابی کلید' }
+};
+function t(key, medium) {
+  const en = I18N.en[key], ur = I18N.ur[key];
+  if (medium === 'urdu') return `<span class="urdu">${ur}</span>`;
+  if (medium === 'bilingual') return `${en} / <span class="urdu">${ur}</span>`;
+  return en;
+}
+
+const PAGE_PRESETS = {
+  a4:      { w: 210,   h: 297,   css: 'A4' },
+  legal13: { w: 215.9, h: 330.2, css: '215.9mm 330.2mm' },
+  legal14: { w: 215.9, h: 355.6, css: '215.9mm 355.6mm' }
+};
+function applyPageSize(key) {
+  const p = PAGE_PRESETS[key] || PAGE_PRESETS.a4;
+  $('#pageStyle').textContent = `
+@page { size: ${p.css}; margin: 12mm 12mm; }
+:root { --pw: ${p.w}mm; --ph: ${p.h}mm; --mx: 12mm; --my: 12mm; }
+`;
+}
+
+/* =========================================================
+   State & Data
+   ========================================================= */
+const STORE = 'tpg.physics10.v21';
+
+const CHAPTERS = {
+  Ch10_En: 'Chapter 10: Thermal Properties of Matter',
+  Ch10_Ur: 'باب 10: مادے کی حرارتی خصوصیات',
+  Ch11_En: 'Chapter 11: Thermal Energy Transfer',
+  Ch11_Ur: 'باب 11: حرارتی توانائی کی منتقلی',
+  Ch12_En: 'Chapter 12: Waves',
+  Ch13_En: 'Chapter 13: Sound',
+  Ch14_En: 'Chapter 14: Light',
+  Ch15_En: 'Chapter 15: Electrostatics',
+  Ch16_En: 'Chapter 16: Current Electricity',
+  Ch17_En: 'Chapter 17: Electromagnetism',
+  Ch18_En: 'Chapter 18: Electromagnetic Induction',
+  Ch19_En: 'Chapter 19: Basic Electronics',
+  Ch20_En: 'Chapter 20: Nuclear Structure',
+  Ch21_En: 'Chapter 21: Space and Earth'
+};
+
+const DEFAULT_QUESTIONS = [
+  // ================= CHAPTER 10 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'When the temperature of a rod of copper is increased, its length:',
+    options:['remains the same', 'increases', 'decreases', 'becomes double'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The amount by which unit length of a material increases when the temperature is raised to 1°C, is called the coefficient of:',
+    options:['cubic expansion', 'volume expansion', 'linear expansion', 'none of these'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What does a liquid turn into once it is evaporated?',
+    options:['Gas', 'Water vapours', 'Air', 'Both (a) and (b)'], answer:3 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which property determines how much heat a solid can absorb before its temperature changes significantly?',
+    options:['Density', 'Specific heat capacity', 'Colour', 'Hardness'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'High-temperature superconductors typically involve which type of material?',
+    options:['Pure metals', 'Organic compounds', 'Ceramics', 'Liquid crystals'], answer:2 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What factors influence the thermal expansion of solids?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is latent heat of fusion?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How do different materials exhibit varying thermal expansion behaviours?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How does evaporation contribute to cooling processes in everyday life?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is latent heat of vaporization, and how is it calculated?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why do bridges need expansion joints but glass jars with metal lids do not, even though both experience temperature changes? Discuss in terms of the nature of thermal expansion.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If two liquids are heated under same conditions, but one of them heats up faster, what does this indicate about the specific heat capacity?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why does a liquid evaporate faster when the air is dry?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'When a piece of ice melts, the temperature does not increase even though heat is supplied. Where does the energy go, and why is this important in phase change?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why do electric transmission wires sag in summer and tighten in winter?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How does thermal expansion differ between solids, liquids, and gases? Provide examples to illustrate these differences.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What are some practical consequences of thermal expansion in everyday life, such as in construction materials or household appliances?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What is latent heat, and why is it important in phase transitions like melting and vaporization?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Why do solids, liquids, and gases expand when heated? Explain with examples.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'If we have an equal amount of water in a wide, shallow dish and a tall, narrow container kept at the same temperature, in which container will evaporation occur faster? Explain the reason scientifically.', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A metal rod of length 1 m expands by 0.02 m when heated from 20 °C to 120 °C. Calculate its coefficient of linear expansion.', options:[], answer:'2.0×10⁻⁴ K⁻¹' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A container holds 1 litre of water at 20°C. What will be its volume at 80°C, assuming water\'s coefficient of volume expansion is 2.1×10⁻⁴ per °C?', options:[], answer:'1.0126 L (or 1012.6 cm³)' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A steel rod initially measures 2 m at 20 °C. If its coefficient of linear expansion is 1.2×10⁻⁵ °C⁻¹, what will be its length at 100°C?', options:[], answer:'2.002 m' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A steel bridge expands by 5 cm on a hot summer day. If the bridge originally spanned 100 m, what is the temperature change?', options:[], answer:'41.67 °C' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'How much heat is required to raise the temperature of a 2 kg iron bar from 20°C to 100°C, given that the specific heat capacity of iron is 450 J kg⁻¹ K⁻¹?', options:[], answer:'72 kJ' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'How much heat is required to melt 500 g of ice at 0°C into water at 0°C? (Latent heat of fusion of ice = 3.36 × 10⁵ J kg⁻¹)', options:[], answer:'168 kJ' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch10_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Calculate the heat required to completely vaporize 1 kg of water at 100°C. (Latent heat of vaporization of water = 2.26 × 10⁶ J kg⁻¹)', options:[], answer:'2.26 M J' },
+
+  // ================= CHAPTER 10 (URDU) =================
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'جب کسی ٹھوس چیز کا درجہ حرارت بڑھایا جائے تو اس کی لمبائی:',
+    options:['وہی رہتی ہے', 'کم ہو جاتی ہے', 'بڑھ جاتی ہے', 'دوگنی ہو جاتی ہے۔'], answer:2 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'وہ عنصر جس کی وجہ سے کسی ٹھوس مادے کی لمبائی میں اضافہ ہوتا ہے جب اس کا درجہ حرارت 1 °C بڑھایا جائے، اسے کہتے ہیں؟',
+    options:['حجمی پھیلاؤ کا گتانک', 'سطحی پھیلاؤ کا گتانک', 'طولی پھیلاؤ کا گتانک', 'ان میں سے کوئی نہیں'], answer:2 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'جب کسی مائع کو بخارات میں تبدیل کیا جاتا ہے تو کیا ہوتا ہے؟',
+    options:['گیس', 'آبی بخارات', 'ہوا', '(a) اور (b) دونوں'], answer:3 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'کون سی خصوصیت یہ طے کرتی ہے کہ کوئی ٹھوس مادہ اپنے درجہ حرارت میں نمایاں تبدیلی سے پہلے کتنی حرارت جذب کر سکتا ہے؟',
+    options:['کثافت', 'مخصوص حرارتی استعداد', 'رنگ', 'سختی'], answer:1 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'بہت زیادہ درجہ حرارت پر پائے جانے والے سپر کنڈکٹرز عام طور پر کس قسم کے مواد پر مشتمل ہوتے ہیں؟',
+    options:['خالص دھاتیں', 'نامیاتی مرکبات', 'سیرامکس', 'مائع کرسٹل'], answer:2 },
+
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'کسی ٹھوس کی حرارتی پھیلاؤ پر کون سے عوامل اثر انداز ہوتے ہیں؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'پگھلنے کی اپتھی حرارت کیا ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'مختلف مواد حرارتی پھیلاؤ میں کیسے مختلف رویہ ظاہر کرتے ہیں؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'روزمرہ زندگی میں بخارات کیسے ٹھنڈک کے عمل میں اہم کردار ادا کرتے ہیں؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'بخارات بننے کی اپتھی حرارت کیا ہے، اور اسے کس طرح شمار کیا جاتا ہے؟', options:[], answer:'' },
+
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'پل بنانے والے انجینئرز ان پلوں میں جوڑ کیوں لگاتے ہیں، جبکہ شیشے کے برتنوں میں دھاتی ڈھکنوں کے لیے یہ ضروری نہیں ہوتا، حالانکہ یہ دونوں ہی درجہ حرارت میں تبدیلی کا سامنا کرتے ہیں؟ حرارتی پھیلاؤ کی نوعیت کے حوالے سے وضاحت کریں۔', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'اگر دو مائعات کو ایک جیسی شرائط میں گرم کیا جائے، لیکن ان میں سے ایک دوسرے سے زیادہ تیزی سے گرم ہو، تو یہ مخصوص حرارتی استعداد کے بارے میں کیا اشارہ دیتا ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'خشک ہوا میں کوئی مائع زیادہ تیزی سے کیوں بخارات بنتا ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'جب برف کا ایک ٹکڑا پگھلتا ہے تو گرمی فراہم کیے جانے کے باوجود درجہ حرارت میں اضافہ نہیں ہوتا۔ توانائی کہاں جاتی ہے، اور اس کا مرحلہ تبدیلی میں کیا کردار ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'بجلی کی تاروں میں گرمیوں میں جھول کیوں آ جاتا ہے اور سردیوں میں وہ سکڑ کیوں جاتی ہیں؟', options:[], answer:'' },
+
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'ٹھوس مائعات اور گیسوں میں حرارتی پھیلاؤ کس طرح مختلف ہوتا ہے؟ ان میں فرق واضح کرنے کے لیے مثالیں فراہم کریں۔', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'روزمرہ زندگی میں حرارتی پھیلاؤ کے کون سے عملی اثرات مرتب ہوتے ہیں؟ مثال کے طور پر تعمیراتی سامان یا گھریلو آلات میں۔', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'اپتھی حرارت کیا ہے، اور یہ پگھلنے اور بخارات بننے جیسے مراحل کی تبدیلیوں میں کیوں اہم ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'ٹھوس، مائعات اور گیسوں گرم ہونے پر پھیلتے ہیں؟ مثالوں کے ساتھ وضاحت کریں۔', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'اگر ایک برابر مقدار میں پانی ایک چوڑے، اتھلے برتن اور ایک لمبے، تنگ برتن میں رکھا جائے اور دونوں کو ایک ہی درجہ حرارت پر رکھا جائے تو کس میں بخارات زیادہ تیزی سے بنیں گے؟ سائنسی طور پر اس کی وجہ بتائیں۔', options:[], answer:'' },
+
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'E. عددی سوالات', subject:'Physics', type:'short', marks:4,
+    text:'ایک لوہے کی سلاخ جس کی لمبائی 1 m ہے، جب اسے 20 °C سے 120 °C تک گرم کیا جاتا ہے تو اس کی لمبائی میں 0.02 m کا اضافہ ہوتا ہے۔ اس کے طولی پھیلاؤ کا گتانک معلوم کریں۔', options:[], answer:'2.0 × 10⁻⁴ K⁻¹' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'E. عددی سوالات', subject:'Physics', type:'short', marks:4,
+    text:'ایک برتن میں 20 °C پر 1 لیٹر پانی موجود ہے۔ اس کا درجہ حرارت 80 °C تک بڑھانے پر اس کا حجم کیا ہوگا؟ پانی کے حجمی پھیلاؤ کا گتانک 2.1 × 10⁻⁴ °C⁻¹ ہے۔', options:[], answer:'1.0126 L (1012.6 cm³)' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'E. عددی سوالات', subject:'Physics', type:'short', marks:4,
+    text:'ایک سٹیل کی سلاخ کی لمبائی 20 °C پر 2 m ہے۔ اگر اس کے طولی پھیلاؤ کا گتانک 1.2 × 10⁻⁵ °C⁻¹ ہو تو اس کی لمبائی 100 °C پر کتنی ہوگی؟', options:[], answer:'2.002 m' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'E. عددی سوالات', subject:'Physics', type:'short', marks:4,
+    text:'سٹیل کا ایک پل گرمیوں کے دن میں 5 cm تک پھیل جاتا ہے۔ اگر اس پل کی اصل لمبائی 100 m ہو تو درجہ حرارت میں کتنا اضافہ ہوا؟', options:[], answer:'41.67 °C' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'E. عددی سوالات', subject:'Physics', type:'short', marks:4,
+    text:'2 کلوگرام لوہے کی سلاخ کا درجہ حرارت 20 °C سے 100 °C تک بڑھانے کے لیے کتنی حرارت درکار ہوگی؟ (لوہے کی مخصوص حرارتی استعداد 450 J kg⁻¹ K⁻¹ ہے)۔', options:[], answer:'72 kJ' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'E. عددی سوالات', subject:'Physics', type:'short', marks:4,
+    text:'500 گرام برف کو 0 °C پر پگھلا کر 0 °C پر پانی میں تبدیل کرنے کے لیے کتنی حرارت درکار ہوگی؟ (برف کے پگھلنے کی اپتھی حرارت = 3.36 × 10⁵ J kg⁻¹)', options:[], answer:'168 kJ' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch10_Ur, section:'E. عددی سوالات', subject:'Physics', type:'short', marks:4,
+    text:'1 کلوگرام پانی کو 100 °C پر مکمل طور پر بخارات میں تبدیل کرنے کے لیے کتنی حرارت درکار ہوگی؟ (پانی کے بخارات بننے کی اپتھی حرارت = 2.26 × 10⁶ J kg⁻¹)', options:[], answer:'2.26 MJ' },
+
+  // ================= CHAPTER 11 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which method of heat transfer requires direct contact between particles?',
+    options:['Convection', 'Radiation', 'Conduction', 'Evaporation'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What causes convection currents in liquids and gases?',
+    options:['The continuous movement of particles in all directions', 'The rising of warm regions and sinking of cooler regions', 'The conduction of heat through the medium', 'The reflection of heat waves'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The natural phenomenon caused by convection currents is:',
+    options:['earthquakes', 'land and sea breezes', 'magnetic fields', 'solar eclipses'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'How does heat transfer occur through radiation?',
+    options:['Through direct contact between objects', 'Through the movement of heated fluid', 'Through electromagnetic waves without needing a medium', 'Through the absorption of water molecules'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The surface which absorbs and emits the most radiation is:',
+    options:['smooth and shiny surfaces', 'dark and rough surfaces', 'transparent and thin surfaces', 'polished and white surfaces'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What is the role of the greenhouse effect in Earth\'s temperature regulation?',
+    options:['It allows all heat to escape into space', 'It blocks heat from entering the atmosphere', 'It traps heat to maintain a stable temperature', 'It causes immediate cooling of Earth\'s surface'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The Sun\'s heat reaches the Earth:',
+    options:['through conduction between air particles', 'through convection in space', 'through radiation via electromagnetic waves', 'through reflection by the moon'], answer:2 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What are the three primary types of heat transfer?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Why does heat travel faster in metals compared to non-metals?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How does convection transfer heat in liquids and gases?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What natural phenomenon causes land and sea breezes?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How do birds and gliders take advantage of convection currents?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is radiation, and how does it transfer heat?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Why does a dull black surface emit and absorb more radiation than a shiny silver surface?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How does the greenhouse effect help regulate Earth\'s temperature?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'During the Leslie\'s Cube experiment, why does the dull black surface radiate more heat than the shiny silver one, even though they are at the same temperature?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'How does the size (surface area) of a radiator affect the amount of heat it emits through radiation? Explain using a real-world example.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why is convection not possible in solids, and how do convection currents in liquids and gases compensate for their poor thermal conductivity?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'How do birds like eagles and gliders manage to stay aloft without flapping their wings for hours? Explain the scientific principle involved.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why does a hot metal object placed in a cooler room eventually cool down? Explain using the concepts of radiation and thermal equilibrium.', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Describe how convection occurs in fluids. How do convection currents contribute to natural phenomena such as sea breezes and wind patterns?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How does radiation differ from conduction and convection in terms of heat transfer? Give examples of radiation in everyday life and explain how different surfaces affect radiation absorption and emission.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Discuss the role of the greenhouse effect in regulating Earth\'s temperature. What are the potential consequences of an enhanced greenhouse effect due to human activities?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Compare the absorption and emission of heat by different surfaces. How does the colour and texture of a surface affect its ability to absorb and emit heat?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch11_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Analyze how uneven heating of Earth\'s surface leads to the formation of convection currents and influence with patterns.', options:[], answer:'' },
+
+  // ================= CHAPTER 11 (URDU) =================
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'انتقال حرارت کا وہ کون سا طریقہ ہے جس میں ذرات کے درمیان براہ راست رابطہ ضروری ہوتا ہے؟',
+    options:['حرارت کا اخراج', 'تابکاری', 'ایصال', 'تبخیر'], answer:2 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'مائعات اور گیسوں میں حرارتی رو کا سبب کیا ہے؟',
+    options:['ذرات کی تمام سمتوں میں مسلسل حرکت', 'گرم علاقوں کا اوپر اٹھنا اور ٹھنڈے علاقوں کا نیچے آنا', 'درمیانے مادے کے ذریعے حرارت کی ترسیل', 'حرارت کی لہروں کا انعکاس'], answer:1 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'حرارتی رو کی وجہ سے پیدا ہونے والا قدرتی مظہر ہے؟',
+    options:['زلزلے', 'خشکی اور سمندری ہوائیں', 'مقناطیسی میدان', 'سورج گرہن'], answer:1 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'تابکاری کے ذریعے حرارت کی منتقلی کیسے ہوتی ہے؟',
+    options:['اشیاء کے درمیان براہ راست رابطے کے ذریعے', 'گرم سیال کی حرکت کے ذریعے', 'برقی مقناطیسی لہروں کے ذریعے، جس کے لیے کسی درمیانے کی ضرورت نہیں', 'پانی کے سالمات کے جذب ہونے کے ذریعے'], answer:2 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'کون سی سطح سب سے زیادہ تابکاری جذب اور خارج کرتی ہے؟',
+    options:['ہموار اور چمکدار سطحیں', 'سیاہ اور کھردری سطحیں', 'شفاف اور پتلی سطحیں', 'پالش کی ہوئی اور سفید سطحیں'], answer:1 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'زمین کے درجہ حرارت کے توازن میں گرین ہاؤس اثر کا کیا کردار ہے؟',
+    options:['یہ تمام حرارت کو خلا میں جانے دیتا ہے', 'یہ فضا میں حرارت کے داخل ہونے کو روکتا ہے', 'یہ درجہ حرارت کو مستحکم رکھنے کے لیے حرارت کو قید کرتا ہے', 'یہ زمین کی سطح کو فوری طور پر ٹھنڈا کرتا ہے'], answer:2 },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'A. کثیر الانتخابی سوالات', subject:'Physics', type:'mcq', marks:1,
+    text:'سورج کی حرارت زمین تک کیسے پہنچتی ہے؟',
+    options:['ہوا کے ذرات کے درمیان ایصال کے ذریعے', 'خلا میں حرارتی رو کے ذریعے', 'برقی مقناطیسی لہروں کے ذریعے تابکاری کے ذریعے', 'چاند کے ذریعے انعکاس کے ذریعے'], answer:2 },
+
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'انتقال حرارت کی تین بنیادی طریقے کیا ہیں؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'دھاتوں میں حرارت غیر دھاتوں کی نسبت تیز کیوں سفر کرتی ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'مائعات اور گیسوں میں حرارتی رو حرارت کیسے منتقل کرتی ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'کون سا قدرتی مظہر خشکی اور سمندری ہواؤں کا سبب بنتا ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'پرندے اور گلائیڈر حرارتی رو سے کیسے فائدہ اٹھاتے ہیں؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'تابکاری کیا ہے، اور یہ حرارت کیسے منتقل کرتی ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'مدھم سیاہ سطح چمکدار چاندی کی سطح کے مقابلے میں زیادہ تابکاری کیوں خارج اور جذب کرتی ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'B. مختصر سوالات', subject:'Physics', type:'short', marks:2,
+    text:'گرین ہاؤس اثر زمین کے درجہ حرارت کو منظم کرنے میں کیسے مدد کرتا ہے؟', options:[], answer:'' },
+
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'لیزلی کیوب کے تجربے میں، مدھم سیاہ سطح چمکدار چاندی کی سطح کے مقابلے میں زیادہ حرارت کیوں خارج کرتی ہے، حالانکہ دونوں کا درجہ حرارت ایک جیسا ہوتا ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'ریڈی ایٹر کا سائز (سطح کا رقبہ) تابکاری کے ذریعے خارج ہونے والی حرارت کی مقدار کو کیسے متاثر کرتا ہے؟ حقیقی دنیا کی مثال دے کر وضاحت کریں۔', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'ٹھوس میں حرارتی رو کیوں ممکن نہیں ہے، اور مائعات اور گیسوں میں حرارتی رو ان کی کمزور حرارتی موصلیت کی تلافی کیسے کرتی ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'عقاب اور گلائیڈر جیسے پرندے گھنٹوں بازو نہ ہلا کر پرواز کیسے کر پاتے ہیں؟ اس میں شامل سائنسی اصول کی وضاحت کریں۔', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'C. تفصیلی جوابات کے سوالات', subject:'Physics', type:'short', marks:3,
+    text:'کمرے میں رکھی ہوئی گرم دھاتی چیز بالآخر ٹھنڈی کیوں ہو جاتی ہے؟ تابکاری اور حرارتی توازن کے تصورات استعمال کرتے ہوئے وضاحت کریں۔', options:[], answer:'' },
+
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'بیان کریں کہ سیالوں میں حرارتی رو کیسے واقع ہوتی ہے۔ حرارتی رو قدرتی مظاہر جیسے سمندری ہواؤں اور ہوا کے پیٹرن میں کیسے حصہ ڈالتی ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'حرارت کی منتقلی کے لحاظ سے تابکاری، ایصال اور حرارتی رو سے کیسے مختلف ہے؟ روزمرہ زندگی میں تابکاری کی مثالیں دیں اور وضاحت کریں کہ مختلف سطحیں تابکاری کے جذب اور اخراج کو کیسے متاثر کرتی ہیں۔', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'زمین کے درجہ حرارت کو منظم کرنے میں گرین ہاؤس اثر کے کردار پر بحث کریں۔ انسانی سرگرمیوں کی وجہ سے بڑھتے ہوئے گرین ہاؤس اثر کے ممکنہ نتائج کیا ہیں؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'مختلف سطحوں کے ذریعے حرارت کے جذب اور اخراج کا موازنہ کریں۔ کسی سطح کا رنگ اور ساخت اس کی حرارت جذب کرنے اور خارج کرنے کی صلاحیت کو کیسے متاثر کرتی ہے؟', options:[], answer:'' },
+  { id:uid(), medium:'Urdu', chapter:CHAPTERS.Ch11_Ur, section:'D. جامع سوالات', subject:'Physics', type:'short', marks:4,
+    text:'تجزیہ کریں کہ زمین کی سطح کے غیر مساوی گرم ہونے سے حرارتی رو کی تشکیل کیسے ہوتی ہے اور یہ ہوا کے نمونوں کو کیسے متاثر کرتی ہے؟', options:[], answer:'' },
+
+  // ================= CHAPTER 12 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The direction of vibration in a longitudinal wave is:',
+    options:['at right angles to the wave direction', 'in circular motion', 'opposite to the wave direction', 'in the same direction as the wave travels'], answer:3 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which part of a transverse wave carry the lowest point?',
+    options:['Crest', 'Compression', 'Rarefaction', 'Trough'], answer:3 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which of the following wave type requires a medium to travel?',
+    options:['X-rays', 'Light waves', 'Radiowaves', 'Sound waves'], answer:3 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The property of a wave which indicates how much energy it carries is:',
+    options:['crest', 'amplitude', 'wavelength', 'speed'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'A wave front is:',
+    options:['the distance between two crests', 'a region of high pressure in a wave', 'a line joining points that vibrate in phase', 'the outer edge of a wave medium'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The wave phenomenon which occurs when waves change direction due to a change in speed is:',
+    options:['diffraction', 'reflection', 'absorption', 'refraction'], answer:3 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What happens to wave speed and wavelength when a tsunami approaches shallow water?',
+    options:['Speed increases, wavelength increases', 'Speed decreases, wavelength shortens', 'Speed remains the same, wavelength shortens', 'Speed increases, wavelength stays constant'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which wave behaviour explains how sound is heard around a corner?',
+    options:['Reflection', 'Refraction', 'Interference', 'Diffraction'], answer:3 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'B. Shorts Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What do waves transfer from one place to another?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'B. Shorts Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Name any two examples of mechanical waves.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'B. Shorts Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Which type of wave can travel through vacuum?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'B. Shorts Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the difference between transverse and longitudinal waves?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'B. Shorts Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is meant by wavelength?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'B. Shorts Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Write the definition of frequency.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'B. Shorts Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What causes a tsunami in the ocean?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why sound cannot travel through space, but light can? Explain using the concept of wave types.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'A student shakes one end of a rope and observes waves move along it. What kind of wave is this, and how do the particles move?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'How does the amplitude of a wave relate to the energy it carries? Give an example to support your answer.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why do we still hear a person talking even if he is behind a wall? Explain using the concept of diffraction.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If size of slit, a wave passes through is much smaller than the wavelength, what will happen to the wave after passing through the slit? Explain briefly.', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain how waves transfer energy without transferring matter. Give examples from daily life.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Describe the difference between mechanical and electromagnetic waves with suitable examples.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What are transverse and longitudinal waves? Explain each with the help of diagrams and examples.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Discuss the properties of waves; such as reflection, refraction, and diffraction. Support your answer with examples.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What is diffraction? How do wavelength and slit size affect the diffraction of waves?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'The wavelength of a wave is 2 metres and its frequency is 5 Hz. What is the speed of the wave?', options:[], answer:'10 m s⁻¹' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A wave travels at a speed of 300 m s⁻¹ and has a wavelength of 3 metres. Calculate its frequency.', options:[], answer:'100 Hz' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A sound wave has a frequency of 250 Hz and a speed of 340 m s⁻¹. Find its wavelength.', options:[], answer:'1.36 m' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A wave has a frequency of 50 Hz. How much time does it take to complete one wave?', options:[], answer:'0.02 s' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A wave has a wavelength of 0.5 m and frequency of 200 Hz. Calculate the speed of the wave.', options:[], answer:'100 m s⁻¹' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch12_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'The time period of a wave is 0.02 seconds. Calculate the frequency of the wave.', options:[], answer:'50 Hz' },
+
+  // ================= CHAPTER 13 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What is required for the production of sound?',
+    options:['A vacuum', 'Vibrations of a medium', 'Only air', 'Light waves'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'An echo is produced due to:',
+    options:['refraction of sound waves', 'reflection of sound waves', 'diffraction of sound waves', 'absorption of sound waves'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'An example of a longitudinal wave is:',
+    options:['light wave', 'water wave', 'sound wave', 'radiowave'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'In which medium does sound travel the fastest?',
+    options:['Gases', 'Liquids', 'Solids', 'Vacuum'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What is the approximate speed of sound in air?',
+    options:['150 m s⁻¹', '330–350 m s⁻¹', '500 m s⁻¹', '1,000 m s⁻¹'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Why is acoustic protection important in building design?',
+    options:['To increase noise pollution', 'To reduce echo and improve sound quality', 'To amplify sound', 'To increase the speed of sound'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'For a normal person, the audible frequency range for sound waves lies between:',
+    options:['10 Hz and 10 kHz', '20 Hz and 20 kHz', '25 Hz and 25 kHz', '30 Hz and 30 kHz'], answer:1 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How does the medium affect the speed of sound?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Does sound waves show reflection?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What factors influence the loudness of sound?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Why do we hear an echo when we clap near a building?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is ultrasound, how is it used in medicine?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why does a tuning fork placed on a wooden table produce a louder sound than when held in the air? What does this tell us about the role of surface area in sound propagation?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If sound needs a medium to travel, how does the bell jar experiment prove this requirement? What happens when air is removed, and why?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'A person hears his echo when shouting near a tall building. Why must the building be at least 17 metres away for the echo to be heard clearly?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why do voices of men sound deeper than those of women or children, even when they are speaking at the same intensity? Explain using the relationship between frequency and pitch.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'In what ways do soft materials like carpets or curtains improve the acoustics of a room? How do they affect echoes and sound quality?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'When a person claps near a canyon and hears the echo after a few seconds, how can they calculate the distance to the canyon? What principle is used in this method?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What is the approximate speed of sound in air, and what factors affect it?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Why does sound travel faster in solids than in liquids and gases? Explain.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How do amplitude and frequency, affect the quality of sound? Explain.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How does echo occur? Explain.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How do reflection, refraction, and diffraction affect the behaviour of sound waves?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What are infrasound and ultrasound, and how are they used in different applications?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'At a particular temperature, the speed of sound in air is 333 m s⁻¹. If the wavelength of a sound wave is 3 cm, calculate the frequency of the sound wave. Is this frequency in the audible range of the human ear?', options:[], answer:'11 kHz, yes audible' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A clock chimes 48 times in 1 minute. Calculate the frequency and period of the chimes.', options:[], answer:'0.8 Hz, 1.25 s' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A car horn emits a sound with a wavelength of 0.5 m. If the speed of sound in air is 340 m s⁻¹, calculate the frequency of the sound produced by the car\'s horn.', options:[], answer:'680 Hz' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A wave travels with a speed of 500 m s⁻¹ and has a wavelength of 2 metres. Calculate the time period of the wave.', options:[], answer:'0.004 s' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A research boat sends a sound wave straight to the seabed and receives the echo 2 seconds later. The speed of sound in seawater is 1600 m s⁻¹. Find the depth of the sea at this position.', options:[], answer:'1600 m' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch13_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A person claps his hands near a mountain and hears the echo after 6 seconds. If the speed of sound is 343 m s⁻¹, what is the distance of the mountain from the person?', options:[], answer:'1029 m' },
+
+  // ================= CHAPTER 14 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What type of image is always formed by a convex mirror?',
+    options:['Real and inverted', 'Virtual and diminished', 'Real and magnified', 'Virtual and magnified'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The optical device which uses a convex lens to magnify an object by creating a virtual image:',
+    options:['camera', 'microscope', 'magnifying glass', 'slide projector'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which statement best describes the phenomenon of total internal reflection?',
+    options:['Light bends when it enters a new medium', 'Light is completely reflected at the boundary of two media', 'Light slows down as it enters a denser medium', 'Light passes through a medium without changing direction'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'A ray of light travelling from water to air bends:',
+    options:['toward the normal', 'away from the normal', 'at 90° to the normal', 'parallel to the normal'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The optical device which works on the principle of inverting an image for projection is:',
+    options:['magnifying glass', 'photograph Enlarger', 'slide projector', 'plane mirror'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What happens to light when it enters an optical fibre?',
+    options:['It is absorbed by the fibre', 'It undergoes total internal reflection', 'It gets refracted at every point', 'It travels in a straight line without deviation'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which of the following phenomenon explains why a pencil appears bent when partially immersed in water?',
+    options:['Reflection', 'Diffraction', 'Refraction', 'Interference'], answer:2 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What happens when light passes from air to water?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Define refractive index. What is the refractive index of air and water?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the principle behind optical fibres?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Describe briefly how a convex lens forms a real or virtual image.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How does the power of a lens relate to its focal length?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Write Snell\'s law and define the terms used in the equation.', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'When a pencil is partially dipped in water, it appears bent or broken. What principle of light explains this phenomenon, and how does it relate to changes in speed?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why can a prism separate white light into its component colours while a plane glass slab cannot, even though both cause refraction?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why does light undergo total internal reflection when travelling from water to air at a certain angle but not the other way around?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Optical fibres use total internal reflection for signal transmission. What would happen if the cladding had a higher refractive index than the core, and why?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'A person uses a magnifying glass to read small print. What must be the relationship between the object distance and the focal length of the lens for the image to be upright and magnified?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain the terms; normal, angle of incidence and angle of reflection in the context of light reflection. Provide a diagram to illustrate these terms.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Define the terms critical angle and total internal reflection. Explain the conditions required for total internal reflection to occur.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Derive the equation; (n = 1 / sin C) for the refractive index in terms of the critical angle C. Include all steps and assumptions.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Describe the structure of an optical fibre. Write its any two advantages.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What is long-sightedness? Discuss its causes.', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'The speed of light in water is 2.25 × 10⁸ m s⁻¹. Calculate the refractive index of water.', options:[], answer:'1.33' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A light ray in air (n₁=1.0) strikes a glass surface (n₂=1.5) at an angle of incidence 30°. Find the angle of refraction inside the glass.', options:[], answer:'19.5°' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A beam of light in air hits a glass slab at an incidence angle of 40°. Find the angle of refraction inside the glass.', options:[], answer:'25°' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A ray of light travels from air into an unknown liquid. The angle of incidence in air is 45°, and the angle of refraction in the liquid is 30°. Calculate the refractive index of the liquid.', options:[], answer:'1.41' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A ray of light passes from air into a liquid. The angle of incidence in air is 50°, and the angle of refraction inside the liquid is 32°. The speed of sound in air is 340 m s⁻¹ and in the same liquid is 1500 m s⁻¹. Calculate: (a) the refractive index of the liquid (b) the speed of light in the liquid.', options:[], answer:'(a) 1.45, (b) 2.08 × 10⁸ m s⁻¹' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Light travels inside a glass block of refractive index n = 1.6. It strikes the glass-air boundary. Calculate the critical angle for total internal reflection.', options:[], answer:'38.68°' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'An object is placed 15.0 cm in front of a convex mirror, forming a virtual image 7.5 cm behind the mirror. What is the focal length of the mirror?', options:[], answer:'-15 cm' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'An object 30 cm tall is located 10.5 cm from a concave mirror with focal length 16 cm. (a) Where is the image located? (b) How high is it?', options:[], answer:'(a) -30.6 cm (b) 87.3 cm' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch14_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'An object is placed at 30 cm to the left of a concave lens with focal length -15 cm. Find the image distance and describe the image.', options:[], answer:'-30 cm, image is virtual and upright formed on the same side of the object' },
+
+  // ================= CHAPTER 15 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Electrical breakdown is:',
+    options:['the process of ionizing a gas due to a strong electric field', 'the process of neutralizing a charged object', 'the process of charging an insulator', 'the process of discharging a conductor'], answer:0 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which of the following is a visible example of electrical breakdown?',
+    options:['Corona discharge', 'Electric current', 'Magnetic field', 'Electric potential'], answer:0 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What happens when two unlike charges are brought close to each other?',
+    options:['They attract', 'They repel', 'They neutralize each other', 'Nothing happens'], answer:0 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'According to Coulomb\'s law, what happens to the attraction of two oppositely charged objects as their distance of separation increases?',
+    options:['Decreases', 'Increases', 'Remains unchanged', 'Cannot be determined'], answer:0 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The device which works on the principle of electrostatics:',
+    options:['electric bell', 'photocopier', 'electric heater', 'transformer'], answer:1 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'State Coulomb\'s law of electrostatics and write its mathematical form.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is an electric field?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Give two examples each of electrical conductors and electrical insulators.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'List some applications of electrostatics in daily life.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What happens when like charges and unlike charges are brought close to each other?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is meant by electrical breakdown, and when does it occur?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What are the dangers of static electricity?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why do some materials gain electrons while others lose electrons when rubbed together? What property of the materials determines this behaviour?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'A charged comb attracts small pieces of paper, but after some time, the paper pieces fall off. Why does this happen?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why do dust particles often get attracted to television screens or computer monitors after they are turned ON?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If we rub a balloon on our dry hair and place it near a thin stream of water, the water bends toward the balloon. What does this tell us about the nature of water molecules?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'A conductor and an insulator are both placed in an electric field. How will their behaviour differ, and why?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Discuss the working of a gold leaf electroscope. How can it be used to determine the nature and magnitude of charge on a body?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How does Coulomb\'s law help in understanding the interaction between charged particles? What factors affect the force between them?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain the concept of electric field intensity. How can the electric field of a point charge and a parallel plate capacitor be represented using field lines?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain how and why electrical conductors and insulators behave differently in terms of charge transfer and movement of electrons.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Discuss how electrostatics plays a role in real-life hazards, such as dust explosions in factories and static shocks from synthetic clothing. How can these hazards be minimized?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A positive test charge of 25 µC is placed in an electric field. The force on it is 0.500 N. What is the magnitude of the electric field at the location of the test charge?', options:[], answer:'2.0 × 10⁴ N C⁻¹' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Two point charges, q₁ = 8 µC and q₂ = 4 µC, are placed at a distance of 120 cm. What will be the Coulomb\'s force between them? Also, find the nature of the force.', options:[], answer:'0.2 N, the direction of repulsion' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Two identical charges repel each other with a force of 0.2 N when they are 9 cm apart. Find the force between them when they are 3 cm apart.', options:[], answer:'1.8 N' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A point charge q=10 µC is placed in air. Calculate the electric field strength at a distance of 0.5 metres from the charge.', options:[], answer:'3.6 × 10⁵ N C⁻¹' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Two small equally charged metal spheres having charge 3 µC are brought close together such that the distance between them is 2.0 cm. Calculate the magnitude of repulsive force that each sphere exerts on the other.', options:[], answer:'202.5 N' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Two small equally charged metal spheres repel each other with a force of 0.5 N when placed 3 cm apart in the air. Calculate the charge on each sphere.', options:[], answer:'224 µC' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch15_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A force of 85 N acts between two charges placed 3.2 cm apart. If one charge is 25 µC, determine the other charge.', options:[], answer:'3.87 µC' },
+
+  // ================= CHAPTER 16 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The direction of conventional current is:',
+    options:['from negative to positive terminal', 'from positive to negative terminal', 'in both directions at the same time', 'it does not have a fixed direction'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What type of electric current flows in one direction only?',
+    options:['Alternating current', 'Direct current', 'Induced current', 'None of these'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The device used to measure electric current:',
+    options:['voltmeter', 'ammeter', 'ohmmeter', 'wattmeter'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What is the function of an electromotive force (e.m.f.) source in a circuit?',
+    options:['To reduce resistance in the circuit', 'To provide energy to drive charges through the circuit', 'To store electrical energy for later use', 'To convert electrical energy into mechanical energy'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The relationship between voltage, current, and resistance is:',
+    options:['V = I R', 'V = I / R', 'V = I² R', 'V = R / I'], answer:0 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What happens to the resistance of a metal conductor when its temperature increases?',
+    options:['It decreases', 'It remains constant', 'It increases', 'It becomes zero'], answer:2 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How does an ammeter measure electric current?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the main difference between direct current and alternating current?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Define electromotive force (e.m.f.).', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'State Ohm\'s law and define resistivity.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the formula for calculating the equivalent resistance of resistors connected in series?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How does temperature affect the resistance of a conductor?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why is it important that an ammeter has very low resistance and is connected in series, while a voltmeter has very high resistance and is connected in parallel? What would happen if they were connected incorrectly?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If a copper wire is replaced with an aluminum wire of the same dimensions, how would the current and power consumption change in the same circuit? Explain using the concept of resistivity.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'In a household lighting circuit, what practical problems might arise if the bulbs were connected in series instead of parallel?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'You are tasked with designing a fuse for a device that operates at 230 V and 5 A. What rating would you choose for the fuse and why? What could go wrong if the rating is too low or too high?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Explain why A.C is more suitable for power transmission across cities, even though D.C is used in batteries and portable electronic devices.', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain the concept of electric current. How is it related to the movement of charges, and how is it measured in a circuit?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Define electromotive force (e.m.f) and potential difference. How does a battery create a potential difference, and what is the role of e.m.f. in maintaining the flow of current?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'State and explain Ohm\'s law. How does the resistance of a conductor affect the flow of current, and how can Ohm\'s law be applied in practical electrical circuits?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Differentiate between series and parallel combinations of resistors. Provide mathematical expressions for calculating the total resistance in both types of circuits.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What is meant by resistivity of a material? How does it depend on the material, and what role does temperature play in changing the resistivity of conductors and semiconductors?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A charge of 25 coulombs passes through a circuit in 10 seconds. Calculate the current flowing through the circuit.', options:[], answer:'2.5 A' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Three resistors of 4 Ω, 6 Ω, and 8 Ω are connected in series to a 24 V battery. Find the total resistance and the current flowing through the circuit.', options:[], answer:'18 Ω, 1.33 A' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Two resistors of 10 Ω and 30 Ω are connected in parallel across a 20 V power supply. Calculate the total resistance and the current drawn from the power supply.', options:[], answer:'7.5 Ω, 2.67 A' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Four 1.5 V batteries are connected in series in a flashlight. Determine the total electromotive force (e.m.f) supplied to the circuit.', options:[], answer:'6 V' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch16_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A circuit has a 5 A current passing through a 7 Ω resistor. Calculate the power dissipated in the resistor and the energy consumed in 10 minutes.', options:[], answer:'175 W, 105 kJ' },
+
+  // ================= CHAPTER 17 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which statement is true about the magnetic poles?',
+    options:['Unlike poles repel', 'Like poles attract', 'Magnetic poles do not affect each other', 'A single magnetic pole does not exist'], answer:3 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'A D.C motor converts:',
+    options:['mechanical energy into electrical energy', 'mechanical energy into chemical energy', 'electrical energy into mechanical energy', 'electrical energy into chemical energy'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The part of a D.C motor that reverses the direction of current through the coil every half-cycle:',
+    options:['the armature', 'the commutator', 'the brushes', 'the split rings'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The two main layers of the Earth\'s core that contribute to the generation of the magnetic field are:',
+    options:['crust and mantle', 'inner core and outer core', 'lithosphere and asthenosphere', 'troposphere and stratosphere'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What does a steady electric current in a conductor generate around it?',
+    options:['Electric field', 'Light', 'Magnetic field', 'Sound waves'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What happens to the magnetic field direction when the direction of the current is reversed?',
+    options:['The magnetic field remains unchanged', 'The magnetic field also reverses direction', 'The magnetic field becomes stronger', 'The magnetic field disappears'], answer:1 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the direction of the magnetic field around a straight current carrying wire?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What happens to the magnetic field if the magnitude of the current in a wire is increased?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How can you identify the north and south poles of an unmarked magnetized steel bar?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What rule determines the direction of force on a current-carrying conductor placed in a magnetic field? Explain briefly.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What role does the commutator play in a D.C motor?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the source of the Earth\'s magnetic field according to the theory?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why does a magnetic field form around a conductor when current flows through it, but not when the current is OFF? What does this reveal about the nature of electricity and magnetism?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'In a D.C motor, why does the coil stop turning after 90° if the direction of the current is not reversed? What mechanical feature solves this issue?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'How does placing a wire at different angles to a magnetic field affect the magnetic force it experiences, and why is this important in designing motors?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How is a magnetic field created around a current-carrying wire, and what factors affect its strength?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain the concept of the right-hand grip rule and how it helps determine the direction of the magnetic field around a current-carrying conductor.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Describe an experiment that demonstrates the magnetic field produced by a current-carrying conductor using a compass or iron filings.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch17_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Discuss the theory behind the Earth\'s magnetic field and the role of the Earth\'s molten core in generating it.', options:[], answer:'' },
+
+  // ================= CHAPTER 18 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What happens to the induced e.m.f. in a coil if the rate of change of the magnetic field increases?',
+    options:['Decreases', 'Remains the same', 'Increases', 'Becomes zero'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'In an A.C generator, slip rings are used to:',
+    options:['reverse current direction periodically', 'convert A.C to D.C', 'prevent induced current', 'increase magnetic flux'], answer:0 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The sky appears blue during the day due to:',
+    options:['reflection of light', 'scattering of shorter wavelengths', 'absorption of blue light', 'refraction of light'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Light can be considered as massless particles called:',
+    options:['electrons', 'protons', 'photons', 'neutrons'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'In a transformer, energy is transferred from the primary coil to the secondary coil through:',
+    options:['direct electrical connection', 'a magnetic field in the iron core', 'electrons flowing through the core', 'heat conduction'], answer:1 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the direction of induced current in Lenz\'s law?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Why are slip rings used in an A.C generator?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'When is induced e.m.f. zero in an A.C generator?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Why is the sky red at sunset?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is a transformer and on what principle does it work?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If a magnet is moved quickly into a coil, a larger e.m.f. is induced. Why does speed affect the magnitude of the induced current?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why is an iron core used in transformers instead of wood or plastic? Explain briefly.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'How does the concept of photons help explain the working of solar sails in space?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why can a transformer work only on alternating current and not on direct current?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Describe how Lenz\'s Law supports the law of conservation of energy. Give one real-life example to support your explanation.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Compare step-up and step-down transformers. Include the difference in number of turns, voltage output, and where is each used.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How does the scattering of sunlight cause the sky to appear blue during the day and red at sunset? Explain.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What is an oscilloscope, and how does it help in analyzing electrical signals? Describe its main components.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What is the shape of the path followed by an electron when it moves at right angles to a uniform magnetic field? Explain why.', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A coil consisting of 50 tightly wound turns experiences a change in magnetic flux from 0.3 Wb to 0.8 Wb over a time interval of 0.4 s. Determine the average induced electromotive force (e.m.f.) generated in the coil during this time.', options:[], answer:'-62.5 V' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A circular loop of radius 0.2 m and resistance 5 Ω is placed perpendicular to a magnetic field of 0.5 T. If the field drops to zero in 0.1 s, calculate: (a) the induced emf (b) the induced current and its direction (assuming the field points into the page).', options:[], answer:'0.63 V, 0.126 A' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A transformer has 500 primary turns and 100 secondary turns. If the primary voltage is 220 V, find: (a) secondary voltage (b) is this a step-up or step-down transformer?', options:[], answer:'44 V, Step-down (Vs < Vp)' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A step-up transformer has a turns ratio of 2:100. If an alternating voltage of 25 V is applied to the primary coil, what will be the secondary voltage?', options:[], answer:'1250 V' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch18_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A step-down transformer has a turns ratio of 100:5. If an A.C voltage of 190 V is applied to the primary coil, what is the voltage across the secondary coil?', options:[], answer:'9.5 V' },
+
+  // ================= CHAPTER 19 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'A diode allows current to flow in:',
+    options:['both directions', 'neither direction', 'one direction only', 'random directions'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What is the primary function of a light-emitting diode?',
+    options:['To block current in both directions', 'To emit light when current passes in one direction', 'To amplify electrical signals', 'To convert light into electrical energy'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The output of a two inputs NOR gate is \'1\', when:',
+    options:['A is \'1\' and B is \'0\'', 'A is \'0\' and B is \'1\'', 'both A and B are \'0\'', 'both A and B are \'1\''], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The output of a NAND gate is \'0\', when:',
+    options:['both of its inputs are \'0\'', 'both of its inputs are \'1\'', 'any of its inputs is \'0\'', 'any of its inputs is \'1\''], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'How many bits make up a byte in Boolean logic?',
+    options:['2', '4', '6', '8'], answer:3 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the function of a semiconductor diode?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What happens when a diode is forward biased?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the function of an LED?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Why does an LED emit light when current passes through it?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What does an analog-to-digital converter (ADC) do?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the difference between analog and digital signals?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is Boolean logic in digital electronics?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What does a NOT gate do in a digital circuit?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the role of an AND gate in digital circuits?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why would a diode be damaged if it is connected in reverse bias with a very high voltage? What does this tell us about the diode\'s physical limits?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'What makes an LED glow brighter or dimmer depending on the voltage applied? How is this property used in adjustable display brightness?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why are digital systems more reliable than analog systems when transmitting signals over long distances?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why is the NOT gate also called an inverter, and how can such a simple function have a major role in digital decision-making?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why would a security system use NAND gates instead of OR or AND gates for certain logical conditions?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain how the depletion region of a diode changes in forward and reverse bias. What effect does this have on current flow?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Describe how an LED produces light. Also explain how the type of semiconductor material affects the colour of the light.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What is Boolean logic? Discuss its importance in solving complex digital problems with examples.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What are logic gates? Describe the working of NAND and OR gates with the help of truth tables and circuit symbols.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How does a NOR gate work, and how can it be used to build other basic logic gates?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch19_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How can a burglar alarm be designed using a NAND gate and an LDR? Explain.', options:[], answer:'' },
+
+  // ================= CHAPTER 20 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What did Rutherford\'s alpha particle scattering experiment reveal about the structure of the atom?',
+    options:['Electrons are distributed evenly throughout the atom', 'Protons and electrons are located in the nucleus', 'Atoms are indivisible and indestructible', 'The nucleus is small, dense, and positively charged'], answer:3 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The atomic number of an element represents:',
+    options:['number of neutrons in the nucleus', 'number of protons in the nucleus', 'total number of protons and neutrons', 'number of electrons and neutrons'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which type of radiation is positively charged and consists of two protons and two neutrons?',
+    options:['Alpha (α)', 'Beta (β)', 'Gamma (γ)', 'Neutron emission'], answer:0 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The process by which an unstable nucleus emits radiation and transforms into a more stable nucleus is called:',
+    options:['nuclear fusion', 'nuclear fission', 'radioactive decay', 'isotopic exchange'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Nuclear fission involves:',
+    options:['combining light nuclei to form heavier ones', 'splitting heavy atomic nuclei into smaller ones', 'absorbing gamma radiation to increase stability', 'none of the above'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What does Einstein\'s equation; E=mc², explain?',
+    options:['The energy released in chemical reactions', 'The equivalence of mass and energy', 'The rate of radioactive decay', 'The conversion of mass into momentum'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which of the following is a practical application of nuclear radiations?',
+    options:['Cooking food in microwave ovens', 'Medical imaging and cancer treatments', 'Solar energy generation', 'Airplane navigation systems'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What are the potential effects of ionizing nuclear radiation on biological tissues?',
+    options:['Increased cellular regeneration', 'DNA damage and cancer', 'Enhanced immune system response', 'Improved metabolic activity'], answer:1 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Define the atomic nucleus. What are its two main characteristics?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the structure of an atom according to Rutherford\'s model?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How does alpha radiation differ from beta radiation?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the primary energy source of the Sun and other stars?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Name the equation proposed by Einstein that relates energy and mass.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the principle behind carbon dating and its applications?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Define nuclear fusion with an example.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Americium-241 (²⁴¹₉₅Am) undergoes alpha decay and produces an alpha particle. Write down the chemical equation for it and name the nucleus formed.', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If an atom is mostly empty space, why do not we fall through solid objects or pass through walls?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Imagine a new radioactive element is discovered. How could scientists estimate its half-life without waiting thousands of years?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If gamma rays do not change the number of protons or neutrons in a nucleus, why are they still considered dangerous?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If carbon-14 stopped forming in the atmosphere today, how would that affect the use of carbon dating in the future?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'What is the difference between nuclear fission and nuclear fusion in terms of process and energy release?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How does the structure of an atom determine its chemical properties? Explain with reference to the arrangement of protons, neutrons, and electrons?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain Einstein\'s equation; E=mc², and its significance. How does this equation relate to nuclear reactions?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Describe the process of radioactive decay and how it leads to the emission of alpha, beta, and gamma radiation?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Why do different isotopes of the same element have similar chemical properties but different physical properties? Explain.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain how carbon dating uses carbon-14 to estimate the age of artifacts. Discuss its reliability, considering the influence of carbon-14\'s half-life?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Find the number of protons and neutrons in the nuclide defined by ²¹₉X.', options:[], answer:'9 protons and 12 neutrons' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A fossil is found to have 25% of the carbon-14 compared to a living sample. How old is the fossil?', options:[], answer:'≈ 11460 years' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A sample initially contains 400 g of a radioactive isotope with a half-life of 10 years. How much remains after 30 years?', options:[], answer:'50 g' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'A radioactive substance has a half-life of 64 months. In how much time, one-eighth of the substance will be left?', options:[], answer:'192 months' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'In a nuclear reaction, 4 µg of mass is converted into energy. Find the energy.', options:[], answer:'360 MJ' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'In 420 days, one-eighth of polonium (Po) remains un-decayed. Calculate the half-life of polonium?', options:[], answer:'140 days' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch20_En, section:'E. Numerical Problems', subject:'Physics', type:'short', marks:4,
+    text:'Three-fourth of the initial mass of a certain radioactive isotope decay after one hour. Find half-life of isotope in minutes?', options:[], answer:'30 min' },
+
+  // ================= CHAPTER 21 (ENGLISH) =================
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What process generates energy in the Sun?',
+    options:['Nuclear fission', 'Nuclear fusion', 'Radioactive decay', 'Chemical reactions'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'The factor which primarily determines a planet\'s surface temperature:',
+    options:['its density', 'its orbital distance from the Sun', 'its gravitational field strength', 'the number of moons it has'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'What is the primary reason cyclones form over warm ocean waters?',
+    options:['The presence of strong winds', 'The high atmospheric pressure', 'The rising of warm, moist air creating low pressure', 'The gravitational pull of the moon'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'Which of the following gas contributes the most to global warming?',
+    options:['Oxygen', 'Carbon dioxide', 'Nitrogen', 'Argon'], answer:1 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'How does the Coriolis effect influence cyclones?',
+    options:['It causes cyclones to spin in opposite directions in different hemispheres', 'It strengthens cyclones over land', 'It prevents warm air from rising', 'It stops the formation of low-pressure areas'], answer:0 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'A major cause of rising sea levels is:',
+    options:['increased volcanic activity', 'the Earth moving closer to the Sun', 'melting glaciers and ice sheets', 'decreased solar radiation'], answer:2 },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'A. Multiple Choice Questions', subject:'Physics', type:'mcq', marks:1,
+    text:'A significant source of background radiation is:',
+    options:['oxygen in the air', 'cosmic rays from space', 'sound waves in the atmosphere', 'light from the Sun'], answer:1 },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What are the two main elements that make up the Sun?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What factors are used to compare planets in terms of their characteristics?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Explain how global warming increases the intensity of hurricanes.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is background radiation, and what are its natural sources?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Name three safety measures used to handle radioactive materials safely.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'Why do cyclones weaken when they move over land?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'How does the Coriolis Effect influence the movement of cyclones?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'B. Short Answer Questions', subject:'Physics', type:'short', marks:2,
+    text:'What is the primary cause of rising sea levels due to global warming?', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Why do gas giants like Jupiter, despite their larger size, have lower densities than rocky planets such as Earth and Mars? What does this tell us about their internal structure?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'If two planets receive the same amount of sunlight but have different atmospheric compositions, why might their surface temperatures still differ significantly?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'How does the coriolis effect play a role in creating the spiraling motion of cyclones, and what might happen to cyclone formation if the Earth stopped rotating?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Compare the ways radiation, conduction, and convection each contribute to geothermal activity. Why is convection considered the primary driver of tectonic plate motion?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'C. Constructed Response Questions', subject:'Physics', type:'short', marks:3,
+    text:'Explain why background radiation is always present in our environment and how cosmic and terrestrial sources balance each other despite fluctuations in human activity.', options:[], answer:'' },
+
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Describe the process of nuclear fusion in the Sun and explain how it generates energy.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'How does a planet\'s orbital distance affect its surface temperature and the amount of solar energy it receives?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain the role of convection in the formation and strengthening of cyclones.', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'What are the major sources of background radiation, and how does human activities contribute to it?', options:[], answer:'' },
+  { id:uid(), medium:'English', chapter:CHAPTERS.Ch21_En, section:'D. Comprehensive Questions', subject:'Physics', type:'short', marks:4,
+    text:'Explain how radiation exposure can be harmful and describe three key safety measures used to minimize its risks.', options:[], answer:'' }
+];
+
+let state = { questions: [], config: {}, selected: [] };
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE);
+    if (raw) {
+      const p = JSON.parse(raw);
+      // If for some reason the questions array is empty, reload defaults
+      if (Array.isArray(p.questions) && p.questions.length > 0) {
+        state.questions = p.questions;
+        state.config    = p.config || {};
+        state.selected  = Array.isArray(p.selected) ? p.selected : [];
+        return;
+      }
+    }
+  } catch (e) { console.warn('load failed', e); }
+  state.questions = DEFAULT_QUESTIONS;
+  state.selected = [];
+}
+
+function saveState() {
+  try { localStorage.setItem(STORE, JSON.stringify(state)); }
+  catch (e) { alert('Could not save to browser storage. Export your bank as JSON to keep it safe.'); }
+}
+
+/* =========================================================
+   View Navigation
+   ========================================================= */
+function showView(name) {
+  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  
+  if (name === 'bank') renderBank();
+  if (name === 'build') renderBuild();
+}
+$$('.nav-btn').forEach(b => b.onclick = () => showView(b.dataset.view));
+
+/* =========================================================
+   Font loading (IndexedDB)
+   ========================================================= */
+const FONT_DB = 'tpg-fonts', FONT_STORE = 'font';
+function openFontDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(FONT_DB, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore(FONT_STORE);
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function saveFont(buf, name) {
+  const db = await openFontDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(FONT_STORE, 'readwrite');
+    tx.objectStore(FONT_STORE).put({ buf, name }, 'urdu');
+    tx.oncomplete = res;
+    tx.onerror = () => rej(tx.error);
+  });
+}
+async function readFont() {
+  const db = await openFontDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(FONT_STORE, 'readonly');
+    const req = tx.objectStore(FONT_STORE).get('urdu');
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+async function registerFont(buf) {
+  const face = new FontFace('UserUrdu', buf);
+  await face.load();
+  document.fonts.add(face);
+}
+
+async function bootFont() {
+  try {
+    const r = await readFont();
+    if (r && r.buf) {
+      await registerFont(r.buf);
+      $('#btnFont').innerHTML = '🔤 Font ✓';
+      $('#btnFont').title = 'Loaded: ' + r.name;
+    }
+  } catch (e) { /* no stored font */ }
+}
+
+$('#btnFont').onclick = () => $('#fileFont').click();
+$('#fileFont').onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const buf = await f.arrayBuffer();
+    await registerFont(buf);
+    await saveFont(buf, f.name);
+    $('#btnFont').innerHTML = '🔤 Font ✓';
+    $('#btnFont').title = 'Loaded: ' + f.name;
+    alert('Urdu font loaded and saved. It will load automatically next time.');
+    if ($('#view-preview').classList.contains('active')) generatePaper();
+  } catch (err) {
+    alert('Could not load that font file: ' + err.message);
+  }
+  e.target.value = '';
+};
+
+/* =========================================================
+   BANK
+   ========================================================= */
+function refreshFilters() {
+  const chaps = [...new Set(state.questions.map(q => q.chapter).filter(Boolean))].sort();
+  for (const id of ['fChapter', 'bChapter']) {
+    const el = $('#' + id), cur = el.value;
+    el.innerHTML = '<option value="">All Chapters</option>' +
+      chaps.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+    if (chaps.includes(cur)) el.value = cur;
+  }
+}
+function typeLabel(t) {
+  return { mcq:'MCQ', short:'Written' }[t] || t;
+}
+
+function renderBank() {
+  refreshFilters();
+  const q   = $('#fSearch').value.trim().toLowerCase();
+  const med = $('#fMedium').value;
+  const chap = $('#fChapter').value;
+  const typ = $('#fType').value;
+
+  const list = state.questions.filter(x =>
+    (!med || x.medium === med) &&
+    (!chap || x.chapter === chap) &&
+    (!typ || x.type === typ) &&
+    (!q || (x.text || '').toLowerCase().includes(q))
+  );
+
+  $('#bankCount').textContent = `${list.length}`;
+
+  if (!state.questions.length) {
+    $('#bankList').innerHTML = `<div class="empty"><h3>No questions yet</h3><p>Add your first question.</p></div>`;
+    return;
+  }
+  if (!list.length) {
+    $('#bankList').innerHTML = `<div class="empty"><h3>No matches</h3><p>Try clearing the filters.</p></div>`;
+    return;
+  }
+
+  $('#bankList').innerHTML = list.map(x => {
+    const urdu = RTL_RE.test(x.text);
+    return `
+    <div class="qitem" data-id="${x.id}">
+      <div class="body">
+        <div class="qtext ${urdu ? 'urdu' : ''}" dir="${urdu ? 'rtl' : 'ltr'}">${esc(x.text)}</div>
+        <div class="meta">
+          <span class="badge ${x.medium==='Urdu'?'urdu':'english'}">${x.medium}</span>
+          <span class="badge">${esc(x.chapter)}</span>
+          ${x.section ? `<span class="badge section">${esc(x.section)}</span>` : ''}
+          <span class="badge ${x.type}">${typeLabel(x.type)}</span>
+          <span class="badge" style="background:#fff; border-color:var(--line);">${x.marks || 1} mark${(x.marks || 1) > 1 ? 's' : ''}</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex:none;">
+        <button class="btn sm" data-act="edit">Edit</button>
+        <button class="btn sm danger" data-act="del">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  $$('#bankList .qitem').forEach(el => {
+    const id = el.dataset.id;
+    el.querySelector('[data-act=edit]').onclick = () => openEditor(id);
+    el.querySelector('[data-act=del]').onclick = () => {
+      if (confirm('Delete this question?')) {
+        state.questions = state.questions.filter(q => q.id !== id);
+        state.selected  = state.selected.filter(s => s !== id);
+        saveState(); renderBank();
+      }
+    };
+  });
+}
+$('#fSearch').oninput = renderBank;
+$('#fMedium').onchange = renderBank;
+$('#fChapter').onchange = renderBank;
+$('#fType').onchange = renderBank;
+
+/* =========================================================
+   EDITOR
+   ========================================================= */
+let editingId = null;
+
+function openEditor(id) {
+  editingId = id || null;
+  const q = id ? state.questions.find(x => x.id === id) : null;
+
+  $('#edTitle').textContent = q ? 'Edit Question' : 'Add Question';
+  $('#edSubject').value = q?.subject || 'Physics';
+  $('#edChapter').value = q?.chapter || CHAPTERS.Ch10_En;
+  $('#edMedium').value  = q?.medium || 'English';
+  $('#edSection').value = q?.section || '';
+  $('#edType').value    = q?.type || 'mcq';
+  $('#edMarks').value   = q?.marks || 1;
+  $('#edText').value    = q?.text || '';
+  $('#edText').dir      = 'auto';
+  $('#edAnswer').value  = (q && q.type !== 'mcq') ? (q.answer ?? '') : '';
+
+  const opts = (q && Array.isArray(q.options) && q.options.length) ? q.options : ['', '', '', ''];
+  renderOptionRows(opts, typeof q?.answer === 'number' ? q.answer : 0);
+  syncTypeUI();
+  $('#editorDlg').showModal();
+  setTimeout(() => $('#edText').focus(), 50);
+}
+
+function renderOptionRows(opts, correctIdx) {
+  const wrap = $('#edOptions');
+  const urdu = RTL_RE.test($('#edText').value || '') || $('#edMedium').value === 'Urdu';
+  wrap.innerHTML = opts.map((o, i) => `
+    <div class="optrow">
+      <input type="radio" name="edCorrect" value="${i}" ${i === correctIdx ? 'checked' : ''}>
+      <span class="key">${urdu ? URDU_LETTERS[i] : LETTERS[i]}</span>
+      <input type="text" class="opt-input ${urdu ? 'urdu' : ''}" dir="${urdu ? 'rtl' : 'ltr'}"
+             value="${esc(o)}" placeholder="Option ${LETTERS[i]}">
+      <button type="button" class="btn sm danger" data-remove="${i}">✕</button>
+    </div>`).join('');
+
+  wrap.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => {
+    const rows = [...wrap.querySelectorAll('.optrow')];
+    if (rows.length <= 2) return;
+    const i = +b.dataset.remove;
+    const vals = rows.map(r => r.querySelector('.opt-input').value);
+    const cur  = +(wrap.querySelector('input[name=edCorrect]:checked')?.value ?? 0);
+    vals.splice(i, 1);
+    renderOptionRows(vals, cur === i ? 0 : (cur > i ? cur - 1 : cur));
+  });
+}
+
+function syncTypeUI() {
+  const type = $('#edType').value;
+  const isChoice = type === 'mcq';
+  $('#edOptionsWrap').style.display = isChoice ? '' : 'none';
+  $('#edAnswerWrap').style.display  = isChoice ? 'none' : '';
+}
+$('#edType').onchange = syncTypeUI;
+
+$('#edMedium').onchange = () => {
+  const vals = [...$$('#edOptions .opt-input')].map(i => i.value);
+  const cur = +(document.querySelector('input[name=edCorrect]:checked')?.value ?? 0);
+  renderOptionRows(vals, cur);
+};
+
+$('#edText').addEventListener('input', () => {
+  if ($('#edType').value === 'mcq') {
+    const urdu = RTL_RE.test($('#edText').value);
+    $$('#edOptions .optrow').forEach((row, i) => {
+      row.querySelector('.key').textContent = urdu ? URDU_LETTERS[i] : LETTERS[i];
+      const inp = row.querySelector('.opt-input');
+      inp.dir = urdu ? 'rtl' : 'ltr';
+      inp.classList.toggle('urdu', urdu);
+    });
+  }
+});
+$('#edAddOpt').onclick = () => {
+  const vals = [...$$('#edOptions .opt-input')].map(i => i.value);
+  if (vals.length >= 8) return;
+  const cur = +(document.querySelector('input[name=edCorrect]:checked')?.value ?? 0);
+  renderOptionRows([...vals, ''], cur);
+};
+$('#edCancel').onclick = () => $('#editorDlg').close();
+$('#btnAdd').onclick = () => openEditor(null);
+
+$('#editorForm').onsubmit = e => {
+  e.preventDefault();
+  const type = $('#edType').value;
+  const text = $('#edText').value.trim();
+  if (!text) { alert('Question text is required.'); return; }
+
+  const base = {
+    id: editingId || uid(),
+    subject: $('#edSubject').value.trim(),
+    chapter: $('#edChapter').value.trim(),
+    medium: $('#edMedium').value,
+    section: $('#edSection').value.trim(),
+    type,
+    marks: Math.max(1, +$('#edMarks').value || 1),
+    text,
+  };
+
+  if (type === 'mcq') {
+    const rows = [...$$('#edOptions .optrow')];
+    const rawOpts = rows.map(r => r.querySelector('.opt-input').value.trim());
+    const options = rawOpts.filter(Boolean);
+    if (options.length < 2) { alert('Provide at least 2 options.'); return; }
+    let correct = +(document.querySelector('input[name=edCorrect]:checked')?.value ?? 0);
+    const correctText = rawOpts[correct];
+    if (correctText) correct = options.indexOf(correctText);
+    if (correct < 0) correct = 0;
+    base.options = options;
+    base.answer = correct;
+  } else {
+    base.options = [];
+    base.answer = $('#edAnswer').value.trim();
+  }
+
+  if (editingId) {
+    const i = state.questions.findIndex(q => q.id === editingId);
+    state.questions[i] = { ...state.questions[i], ...base };
+  } else {
+    state.questions.push(base);
+  }
+  saveState();
+  $('#editorDlg').close();
+  renderBank();
+};
+
+/* =========================================================
+   BULK PASTE
+   ========================================================= */
+$('#btnBulk').onclick = () => {
+  $('#bkSubject').value = 'Physics';
+  $('#bkChapter').value = CHAPTERS.Ch10_En;
+  $('#bkText').value = '';
+  $('#bulkDlg').showModal();
+};
+$('#bkCancel').onclick = () => $('#bulkDlg').close();
+
+function parseBulk(text) {
+  const blocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+  const out = [];
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) continue;
+    const stem = lines[0].replace(/^[Qq]\d*[\).:\-]\s*/, '').trim();
+    if (!stem) continue;
+
+    const options = [];
+    let answerText = '';
+
+    for (const line of lines.slice(1)) {
+      const mAns = line.match(/^(?:ans|answer|جواب)\s*[:=\-]\s*(.+)$/i);
+      if (mAns) { answerText = mAns[1].trim(); continue; }
+      const isCorrect = /^[*+]/.test(line);
+      let opt = line.replace(/^[*+]\s*/, '');
+      opt = opt.replace(/^[A-Ha-h][\).]\s*/, '').trim();
+      if (!opt) continue;
+      options.push({ text: opt, correct: isCorrect });
+    }
+
+    const q = {
+      id: uid(),
+      subject: $('#bkSubject').value.trim(),
+      chapter: $('#bkChapter').value.trim(),
+      medium: $('#bkMedium').value,
+      section: $('#bkSection').value.trim(),
+      marks: Math.max(1, +$('#bkMarks').value || 1),
+      text: stem, options: [], answer: ''
+    };
+
+    if (options.length >= 2) {
+      q.type = 'mcq';
+      q.options = options.map(o => o.text);
+      let idx = options.findIndex(o => o.correct);
+      if (idx < 0) idx = 0;
+      q.answer = idx;
+    } else {
+      q.type = 'short';
+      q.answer = answerText || (options[0]?.text ?? '');
+    }
+    out.push(q);
+  }
+  return out;
+}
+
+$('#bulkForm').onsubmit = e => {
+  e.preventDefault();
+  const parsed = parseBulk($('#bkText').value);
+  if (!parsed.length) { alert('Nothing could be parsed. Check the format.'); return; }
+  state.questions.push(...parsed);
+  saveState();
+  $('#bulkDlg').close();
+  renderBank();
+  alert(`Added ${parsed.length} question${parsed.length > 1 ? 's' : ''}.`);
+};
+
+/* =========================================================
+   IMPORT / EXPORT
+   ========================================================= */
+$('#btnExport').onclick = () => {
+  const blob = new Blob([JSON.stringify(
+    { questions: state.questions, config: state.config, selected: state.selected,
+      exported: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `question-bank-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+$('#btnImport').onclick = () => $('#fileImport').click();
+$('#fileImport').onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const p = JSON.parse(r.result);
+      const incoming = Array.isArray(p) ? p : p.questions;
+      if (!Array.isArray(incoming)) throw new Error('no questions array');
+      const merge = confirm(`Import ${incoming.length} questions.\n\nOK = MERGE with existing\nCancel = REPLACE bank`);
+      state.questions = merge ? [...state.questions, ...incoming] : incoming;
+      if (p.config) state.config = p.config;
+      saveState(); renderBank();
+      alert('Import complete.');
+    } catch (err) {
+      alert('Invalid JSON file: ' + err.message);
+    }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+};
+
+/* =========================================================
+   BUILD
+   ========================================================= */
+const CFG_FIELDS = ['cSchool','cTitle','cChapter','cClass','cSubject','cDate','cDuration','cVariants','cCols',
+                    'cPage','cPerSheet','cArr','cMedium','cShuffleQ','cShuffleO','cKey','cMarks'];
+
+function applyConfig(cfg = {}) {
+  const d = {
+    cSchool:'', cTitle:'Class Test', cChapter:'', cClass:'', cSubject:'', cDate:'',
+    cDuration:'60 minutes', cVariants:'1', cCols:'2',
+    cPage:'a4', cPerSheet:'1', cArr:'stack', cMedium:'english',
+    cShuffleQ:false, cShuffleO:false, cKey:true, cMarks:true
+  };
+  Object.assign(d, cfg);
+  for (const id of CFG_FIELDS) {
+    const el = $('#' + id);
+    if (el.type === 'checkbox') el.checked = !!d[id];
+    else el.value = d[id] ?? '';
+  }
+  applyPageSize($('#cPage').value);
+  syncArrVisibility();
+}
+
+function readConfig() {
+  const c = {};
+  for (const id of CFG_FIELDS) {
+    const el = $('#' + id);
+    c[id] = el.type === 'checkbox' ? el.checked : el.value;
+  }
+  return c;
+}
+
+function syncArrVisibility() {
+  $('#arrWrap').style.display = $('#cPerSheet').value === '2' ? '' : 'none';
+}
+
+let isUpdatingSelection = false;
+
+function updateSelectionFromCheckboxes() {
+  if (isUpdatingSelection) return;
+  isUpdatingSelection = true;
+
+  const med = $('#bMedium').value;
+  const chap = $('#bChapter').value;
+  const checkedSecs = $$('.sec-cb:checked').map(cb => cb.value);
+
+  let newSelected = [];
+  if (checkedSecs.length > 0) {
+    newSelected = state.questions.filter(x => 
+      (!med || x.medium === med) &&
+      (!chap || x.chapter === chap) &&
+      checkedSecs.some(sec => x.section && x.section.startsWith(sec))
+    ).map(x => x.id);
+  }
+  
+  state.selected = newSelected;
+  saveState();
+  renderBuildList();
+  
+  isUpdatingSelection = false;
+}
+
+function renderBuild() {
+  refreshFilters();
+  
+  const med = $('#bMedium').value;
+  const chap = $('#bChapter').value;
+  const secs = $$('.sec-cb:checked').map(cb => cb.value);
+  
+  if (secs.length > 0) {
+    updateSelectionFromCheckboxes();
+  } else {
+    renderBuildList();
+  }
+}
+
+function renderBuildList() {
+  const q = $('#bSearch') ? $('#bSearch').value.trim().toLowerCase() : '';
+  const med = $('#bMedium').value;
+  const chap = $('#bChapter').value;
+  
+  const list = state.questions.filter(x =>
+    (!med || x.medium === med) &&
+    (!chap || x.chapter === chap) &&
+    (!q || (x.text || '').toLowerCase().includes(q)));
+
+  $('#buildCount').textContent = `${state.selected.length}`;
+
+  const sel = new Set(state.selected);
+  $('#buildList').innerHTML = list.map(x => {
+    const urdu = RTL_RE.test(x.text);
+    return `
+    <label class="pick">
+      <input type="checkbox" data-id="${x.id}" ${sel.has(x.id) ? 'checked' : ''}>
+      <span class="t">
+        <span class="stem ${urdu ? 'urdu' : ''}" dir="${urdu ? 'rtl' : 'ltr'}">${esc(x.text)}</span>
+        <span style="font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+          <span class="badge ${x.medium==='Urdu'?'urdu':'english'}">${x.medium}</span>
+          <span class="badge">${esc(x.chapter)}</span>
+          ${x.section ? `<span class="badge section">${esc(x.section)}</span>` : ''}
+          <span class="badge ${x.type}">${typeLabel(x.type)}</span>
+          <span class="badge" style="background:#fff; border-color:var(--line);">${x.marks || 1} mark${(x.marks||1)>1?'s':''}</span>
+        </span>
+      </span>
+    </label>`;
+  }).join('');
+
+  $$('#buildList input[type=checkbox]').forEach(cb => {
+    cb.onchange = () => {
+      const s = new Set(state.selected);
+      cb.checked ? s.add(cb.dataset.id) : s.delete(cb.dataset.id);
+      state.selected = [...s];
+      saveState(); updateSummary();
+      $('#buildCount').textContent = `${state.selected.length}`;
+    };
+  });
+  updateSummary();
+}
+
+function updateSummary() {
+  const sel = state.selected.map(id => state.questions.find(q => q.id === id)).filter(Boolean);
+  const marks = sel.reduce((a, q) => a + (q.marks || 1), 0);
+  const variants = +$('#cVariants').value || 1;
+  const per = +$('#cPerSheet').value || 1;
+  const sheets = Math.ceil(variants / per);
+  const totalTests = sheets * per;
+  $('#buildSummary').innerHTML = `
+    <div>Questions <b>${sel.length}</b></div>
+    <div>Total marks <b>${marks}</b></div>
+    <div>Variants <b>${variants}</b></div>
+    <div>Master sheets <b>${sheets}</b></div>
+    <div>Tests per sheet <b>${per}</b></div>
+    <div>Total tests <b>${totalTests}</b></div>`;
+}
+
+$('#bMedium').onchange = renderBuild;
+$('#bChapter').onchange = renderBuild;
+$$('.sec-cb').forEach(cb => cb.onchange = renderBuild);
+
+$('#cVariants').onchange = updateSummary;
+$('#cPerSheet').onchange = () => { syncArrVisibility(); updateSummary(); };
+$('#cPage').onchange = () => applyPageSize($('#cPage').value);
+
+$('#btnClearSelection').onclick = () => {
+  state.selected = [];
+  $$('.sec-cb').forEach(cb => cb.checked = false);
+  saveState(); renderBuildList();
+};
+
+CFG_FIELDS.forEach(id => $('#' + id).addEventListener('change', () => {
+  state.config = readConfig(); saveState();
+}));
+
+/* =========================================================
+   PAPER GENERATION
+   ========================================================= */
+function makeVariant(questions, opts) {
+  const grouped = {};
+  questions.forEach(q => {
+    const s = q.section || 'Questions';
+    if (!grouped[s]) grouped[s] = [];
+    grouped[s].push(q);
+  });
+
+  return Object.keys(grouped).map(sec => {
+    let qs = grouped[sec];
+    if (opts.shuffleQuestions) qs = shuffle(qs);
+
+    const processedQs = qs.map(q => {
+      const copy = { ...q, options: [...(q.options || [])] };
+      if (opts.shuffleOptions && copy.type === 'mcq' && copy.options.length > 1) {
+        const perm = shuffle(copy.options.map((_, i) => i));
+        copy.options = perm.map(i => q.options[i]);
+        copy.answer = perm.indexOf(q.answer);
+      }
+      return copy;
+    });
+    return { section: sec, questions: processedQs };
+  });
+}
+
+function variantLabels(medium) {
+  if (medium === 'urdu') return ['ورژن الف', 'ورژن ب', 'ورژن ج'];
+  return ['Variant A', 'Variant B', 'Variant C'];
+}
+
+function renderPaperHeader(cfg, variantLabel, totalMarks) {
+  const m = cfg.cMedium;
+  const L = k => t(k, m);
+  
+  return `
+    <div class="paper-head">
+      <div class="head-top">
+        ${cfg.cSchool ? `<span class="school ${m==='urdu'?'urdu':''}">${esc(cfg.cSchool)}</span>` : ''}
+        ${cfg.cTitle ? `<span class="exam ${m==='urdu'?'urdu':''}">${esc(cfg.cTitle)}</span>` : ''}
+        ${variantLabel ? `<span class="variant-tag ${m==='urdu'?'urdu':''}">${esc(variantLabel)}</span>` : ''}
+      </div>
+      ${cfg.cChapter ? `<div class="chapter ${m==='urdu'?'urdu':''}">${esc(cfg.cChapter)}</div>` : ''}
+      <div class="meta">
+        ${cfg.cClass    ? `<span><b>${L('class')}:</b> ${esc(cfg.cClass)}</span>` : ''}
+        ${cfg.cSubject  ? `<span><b>${L('subject')}:</b> ${esc(cfg.cSubject)}</span>` : ''}
+        ${cfg.cDuration ? `<span><b>${L('time')}:</b> ${esc(cfg.cDuration)}</span>` : ''}
+        <span><b>${L('totalMarks')}:</b> ${totalMarks}</span>
+      </div>
+    </div>`;
+}
+
+function renderQuestion(q, i, cfg) {
+  const isRTL = RTL_RE.test(q.text) || (Array.isArray(q.options) && q.options.some(o => RTL_RE.test(o)));
+  const dir = isRTL ? 'rtl' : 'ltr';
+  const cls = isRTL ? 'urdu' : '';
+  const letters = isRTL ? URDU_LETTERS : LETTERS;
+  const showMarks = cfg.cMarks;
+
+  let h = `<li class="question" dir="${dir}">`;
+  h += `<div class="q-head">
+          <span class="q-num">${i}.</span>
+          <span class="q-text ${cls}">${nl2br(q.text)}</span>
+          ${showMarks ? `<span class="q-marks">[${q.marks || 1}]</span>` : ''}
+        </div>`;
+
+  if (q.type === 'mcq') {
+    const cols = Math.min(4, Math.max(1, +cfg.cCols || 2));
+    h += `<div class="options cols-${cols}">` +
+      (q.options || []).map((o, oi) =>
+        `<div class="opt"><span class="opt-key">${letters[oi] || ''}</span><span class="${cls}">${esc(o)}</span></div>`
+      ).join('') + `</div>`;
+  }
+  return h + `</li>`;
+}
+
+function renderMiniPaper(variantData, cfg, variantLabel, totalMarks) {
+  const m = cfg.cMedium;
+  const dir = m === 'urdu' ? 'rtl' : 'ltr';
+  const cls = m === 'urdu' ? 'urdu' : '';
+  
+  let qIndex = 1;
+  let questionsHtml = '';
+  
+  variantData.forEach(group => {
+    if (!group.questions.length) return;
+    if (group.section && group.section.trim()) {
+      questionsHtml += `<div class="section-title">${esc(group.section)}</div>`;
+    }
+    questionsHtml += `<ol class="questions">`;
+    group.questions.forEach(q => {
+      questionsHtml += renderQuestion(q, qIndex++, cfg);
+    });
+    questionsHtml += `</ol>`;
+  });
+
+  return `<div class="mini-paper ${cls}" dir="${dir}">
+      ${renderPaperHeader(cfg, variantLabel, totalMarks)}
+      ${questionsHtml}
+    </div>`;
+}
+
+function renderAnswerKey(variantData, cfg, label) {
+  const m = cfg.cMedium;
+  const dir = m === 'urdu' ? 'rtl' : 'ltr';
+  const cls = m === 'urdu' ? 'urdu' : '';
+  
+  let qIndex = 1;
+  let keyHtml = '';
+  
+  variantData.forEach(group => {
+    if (!group.questions.length) return;
+    if (group.section && group.section.trim()) {
+      keyHtml += `<div class="section-title">${esc(group.section)}</div>`;
+    }
+    keyHtml += `<div class="key-block">`;
+    group.questions.forEach(q => {
+      const isRTL = RTL_RE.test(q.text) || (q.options||[]).some(o => RTL_RE.test(o));
+      const letters = isRTL ? URDU_LETTERS : LETTERS;
+      let a;
+      if (q.type === 'mcq') {
+        a = letters[q.answer] ?? '?';
+        if (q.options?.[q.answer]) a += `. ${esc(q.options[q.answer])}`;
+      } else {
+        a = esc(q.answer || '—');
+      }
+      keyHtml += `<div class="key-line">
+        <span class="key-num">${qIndex++}.</span>
+        <span class="${isRTL ? 'urdu' : ''}">${a}</span>
+      </div>`;
+    });
+    keyHtml += `</div>`;
+  });
+
+  return `<div class="sheet-frame">
+    <div class="mini-paper key ${cls}" dir="${dir}">
+      <div class="paper-head">
+        <div class="head-top">
+          <span class="school">${t('answerKey', m)}</span>
+          <span class="exam ${cls}">${esc(label)}</span>
+        </div>
+      </div>
+      ${keyHtml}
+    </div>
+  </div>`;
+}
+
+// Auto-fit algorithm for tiled layouts
+function autoFitTiles() {
+  const per = +$('#cPerSheet').value || 1;
+  if (per === 1) return; 
+
+  const baseSize = per === 2 ? 12 : (per === 4 ? 10 : 14);
+  const minSize = 6;
+
+  $$('.mini-paper').forEach(mp => {
+    mp.style.fontSize = `${baseSize}px`;
+    let currentSize = baseSize;
+    
+    while (mp.scrollHeight > mp.clientHeight + 2 && currentSize > minSize) {
+      currentSize -= 0.5;
+      mp.style.fontSize = `${currentSize}px`;
+    }
+  });
+}
+
+function generatePaper() {
+  const cfg = readConfig();
+  state.config = cfg; saveState();
+
+  const chosen = state.selected.map(id => state.questions.find(q => q.id === id)).filter(Boolean);
+  if (!chosen.length) { alert('Select at least one question first.'); return; }
+
+  const totalMarks = chosen.reduce((a, q) => a + (q.marks || 1), 0);
+  const V  = Math.min(3, Math.max(1, +cfg.cVariants || 1));
+  const per = +cfg.cPerSheet || 1;
+  const arr = cfg.cArr || 'stack';
+  const opts = { shuffleQuestions: cfg.cShuffleQ, shuffleOptions: cfg.cShuffleO };
+  const labels = variantLabels(cfg.cMedium);
+
+  const variants = [];
+  for (let v = 0; v < V; v++) variants.push(makeVariant(chosen, opts));
+
+  const sheets = Math.ceil(V / per);
+  const parts = [];
+  for (let s = 0; s < sheets; s++) {
+    let tiles = '';
+    for (let slot = 0; slot < per; slot++) {
+      const v = (s * per + slot) % V;
+      const label = V > 1 ? labels[v] : '';
+      tiles += renderMiniPaper(variants[v], cfg, label, totalMarks);
+    }
+    parts.push(`<div class="sheet-frame">
+      <div class="sheet" data-per="${per}" data-arr="${arr}">${tiles}</div>
+    </div>`);
+  }
+
+  if (cfg.cKey) {
+    for (let v = 0; v < V; v++) {
+      parts.push(renderAnswerKey(variants[v], cfg, V > 1 ? labels[v] : t('answerKey', cfg.cMedium)));
+    }
+  }
+
+  $('#paperRoot').innerHTML = parts.join('');
+  showView('preview');
+
+  // Apply Auto-Fit after rendering
+  requestAnimationFrame(() => {
+    autoFitTiles();
+    
+    let overflow = 0;
+    if (per > 1) {
+      $$('.sheet .mini-paper').forEach(mp => {
+        if (mp.scrollHeight > mp.clientHeight + 2) overflow++;
+      });
+    }
+    const note = `${chosen.length} questions · ${totalMarks} marks · ${V} variant${V>1?'s':''} · ` +
+                 `${sheets} master sheet${sheets>1?'s':''} (${per} per sheet)`;
+    $('#previewNote').innerHTML = overflow
+      ? `<span style="color:var(--danger);font-weight:600;">⚠ ${overflow} tile(s) overflow even after auto-fit. Reduce questions.</span>`
+      : `<span style="color:var(--success);font-weight:600;">✓ All items fit perfectly.</span>`;
+  });
+}
+
+$('#btnGenerate').onclick = generatePaper;
+$('#btnPrint').onclick = () => window.print();
+
+/* =========================================================
+   Boot
+   ========================================================= */
+loadState();
+applyConfig(state.config);
+renderBank();
+updateSummary();
+bootFont();
+</script>
+</body>
+</html>
+```

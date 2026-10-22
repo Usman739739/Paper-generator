@@ -1,0 +1,6 @@
+{
+  "name": "PaperGen - Exam & Test Paper Generator",
+  "description": "Professional exam and test paper generator with bilingual English & Urdu question bank, multi-variant paper building, customized layouts, and high-fidelity print formatting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
